@@ -8,35 +8,86 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export default function CreatePlayers() {
   const [value, setValue] = useState('');
   const [displayValues, setDisplayValues] = useState([]);
+  const [color, setColor] = useState('#000');
 
   useEffect(() => {
-    const subscription = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'players' },
-        (payload: any) => {
-          setDisplayValues((prevValues) => [...prevValues, payload.new.name]);
-          console.log('Change received!', payload);
-        }
-      )
-      .subscribe();
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase.from('players').select('*');
+
+      if (error) {
+        console.error(error);
+      } else {
+        setDisplayValues(
+          data.map((player) => ({
+            name: player.name,
+            class: player.class,
+          }))
+        );
+      }
+    };
+
+    fetchPlayers();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { data, error } = await supabase
       .from('players')
-      .insert([{ name: value }]);
+      .insert({ name: value, class: color });
+
+    console.log(data, 'data');
 
     if (error) {
       console.error(error);
     }
   };
 
+  const removePlayer = async (name) => {
+    const { data, error } = await supabase
+      .from('players')
+      .delete()
+      .eq('name', name.name);
+
+    console.log(name, 'id');
+    console.log(data, 'data');
+
+    if (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const test = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players' },
+        async (payload) => {
+          const { data, error } = await supabase.from('players').select('*');
+
+          console.log(payload, 'payload');
+          if (error) {
+            console.error(error);
+          } else {
+            setDisplayValues(
+              data.map((player) => ({
+                name: player.name,
+                class: player.class,
+              }))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(test);
+    };
+  }, []);
+
   return (
     <div className='flex items-center justify-center p-4 mt-5 rounded-xl sm:mt-10 md:p-10'>
-      <form className='w-full' onSubmit={handleSubmit}>
+      <form className='w-full'>
         <div className='mb-5'>
           <h1 className='mb-10 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white'>
             OwlHoot🦉
@@ -48,14 +99,18 @@ export default function CreatePlayers() {
             <span
               key={index}
               id='badge-dismiss-green'
-              className='inline-flex items-center px-2 py-1 text-sm font-medium text-green-800 bg-green-100 rounded me-2 dark:bg-green-900 dark:text-green-300'
+              className='inline-flex items-center px-2 py-1 text-sm font-medium text-white rounded me-2'
+              style={{ backgroundColor: value.class }}
             >
-              {value}
+              {value.name}
               <button
                 type='button'
-                className='inline-flex items-center p-1 text-sm text-green-400 bg-transparent rounded-sm ms-2 hover:bg-green-200 hover:text-green-900 dark:hover:bg-green-800 dark:hover:text-green-300'
+                className='inline-flex items-center p-1 text-sm text-white bg-transparent rounded-lg ms-2 hover:bg-white hover:text-white dark:hover:bg-white dark:hover:text-black'
                 data-dismiss-target='#badge-dismiss-green'
                 aria-label='Remove'
+                onClick={(e) => {
+                  removePlayer(value);
+                }}
               >
                 <svg
                   className='w-2 h-2'
@@ -88,9 +143,23 @@ export default function CreatePlayers() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
+          <label
+            htmlFor='hs-color-input'
+            className='block my-4 text-sm font-medium dark:text-white'
+          >
+            Vælg farve
+          </label>
+          <input
+            type='color'
+            className='block w-10 h-10 p-1 bg-white border border-gray-200 rounded-lg cursor-pointer disabled:opacity-50 disabled:pointer-events-none '
+            title='Choose your color'
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
         </div>
         <button
           type='submit'
+          onClick={handleSubmit}
           className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
         >
           Bekræft
