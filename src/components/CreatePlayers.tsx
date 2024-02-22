@@ -1,5 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
+
+// Move Supabase client creation to a separate file
+
+// Extract API calls into a separate service
+import {
+  fetchPlayers,
+  insertPlayer,
+  deletePlayer,
+} from '../services/playerService';
+
 const supabaseUrl = 'https://emlynmhrnmephemzdehn.supabase.co';
 const supabaseKey =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtbHlubWhybm1lcGhlbXpkZWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY2MjIyODIsImV4cCI6MjAyMjE5ODI4Mn0.8xCLIDhvutgdpB4l1rGKV00Sf3MoPGMKKCsqblZAYk4';
@@ -8,74 +18,23 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export default function CreatePlayers() {
   const [value, setValue] = useState('');
   const [displayValues, setDisplayValues] = useState([]);
-  const [color, setColor] = useState('#000');
+  const [color, setColor] = useState('#000000');
 
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      const { data, error } = await supabase.from('players').select('*');
-
-      if (error) {
-        console.error(error);
-      } else {
-        setDisplayValues(
-          data.map((player) => ({
-            name: player.name,
-            class: player.class,
-          }))
-        );
-      }
-    };
-
-    fetchPlayers();
+  const fetchAndSetPlayers = useCallback(async () => {
+    const players = await fetchPlayers();
+    setDisplayValues(players);
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { data, error } = await supabase
-      .from('players')
-      .insert({ name: value, class: color });
-
-    console.log(data, 'data');
-
-    if (error) {
-      console.error(error);
-    }
-  };
-
-  const removePlayer = async (name) => {
-    const { data, error } = await supabase
-      .from('players')
-      .delete()
-      .eq('name', name.name);
-
-    console.log(name, 'id');
-    console.log(data, 'data');
-
-    if (error) {
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
+    fetchAndSetPlayers();
+
     const test = supabase
       .channel('custom-all-channel')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'players' },
         async (payload) => {
-          const { data, error } = await supabase.from('players').select('*');
-
-          console.log(payload, 'payload');
-          if (error) {
-            console.error(error);
-          } else {
-            setDisplayValues(
-              data.map((player) => ({
-                name: player.name,
-                class: player.class,
-              }))
-            );
-          }
+          fetchAndSetPlayers();
         }
       )
       .subscribe();
@@ -83,6 +42,16 @@ export default function CreatePlayers() {
     return () => {
       supabase.removeChannel(test);
     };
+  }, [fetchAndSetPlayers]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await insertPlayer(value, color);
+  };
+
+  const removePlayer = useCallback(async (name) => {
+    console.log(name, 'name');
+    await deletePlayer(name.name);
   }, []);
 
   return (
@@ -138,7 +107,7 @@ export default function CreatePlayers() {
             type='text'
             id='name'
             className='bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
-            placeholder='Mikkel'
+            placeholder='Navn'
             required
             value={value}
             onChange={(e) => setValue(e.target.value)}
