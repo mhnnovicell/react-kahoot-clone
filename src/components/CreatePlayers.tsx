@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { motion } from 'framer-motion';
 
 // Move Supabase client creation to a separate file
 
@@ -54,6 +55,13 @@ export default function CreatePlayers() {
     await deletePlayer(name.name);
   }, []);
 
+  const spring = {
+    type: 'spring',
+    damping: 40,
+    stiffness: 800,
+    duration: 0.5,
+  };
+
   return (
     <div className='flex items-center justify-center p-4 mt-5 rounded-xl sm:mt-10 md:p-10'>
       <form className='w-full'>
@@ -65,24 +73,37 @@ export default function CreatePlayers() {
             Players:
           </p>
           {displayValues.map((value, index) => (
-            <span
+            <motion.div
               key={index}
-              id='badge-dismiss-green'
-              className='inline-flex items-center px-2 py-1 text-sm font-medium text-white rounded me-2'
+              id={value.name}
+              className='inline-flex items-center px-2 py-1 m-1 text-sm font-bold text-white rounded'
               style={{ backgroundColor: value.class }}
+              initial={['visible', 'active']}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              exit={{ opacity: 0 }}
+              transition={spring}
+              animate={['visible', 'active']}
+              layout
             >
               {value.name}
-              <button
+              <motion.button
                 type='button'
-                className='inline-flex items-center p-1 text-sm text-white bg-transparent rounded-lg ms-2 hover:bg-white hover:text-white dark:hover:bg-white dark:hover:text-black'
+                className='inline-flex items-center p-1 text-sm font-bold text-white bg-transparent rounded-lg ms-2 hover:bg-white hover:text-white dark:hover:bg-white dark:hover:text-black'
                 data-dismiss-target='#badge-dismiss-green'
                 aria-label='Remove'
                 onClick={(e) => {
                   removePlayer(value);
                 }}
+                whileHover={{
+                  scale: 1.1,
+                  transition: { duration: 1 },
+                }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 <svg
-                  className='w-2 h-2'
+                  className='w-3 h-3 font-bold stroke-2 '
                   aria-hidden='true'
                   xmlns='http://www.w3.org/2000/svg'
                   fill='none'
@@ -94,8 +115,8 @@ export default function CreatePlayers() {
                   />
                 </svg>
                 <span className='sr-only'>Remove badge</span>
-              </button>
-            </span>
+              </motion.button>
+            </motion.div>
           ))}
           <label
             htmlFor='name'
@@ -126,13 +147,18 @@ export default function CreatePlayers() {
             onChange={(e) => setColor(e.target.value)}
           />
         </div>
-        <button
+        <motion.button
           type='submit'
+          whileHover={{
+            scale: 1.1,
+            transition: { duration: 1 },
+          }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleSubmit}
           className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
         >
           Bekræft
-        </button>
+        </motion.button>
       </form>
     </div>
   );
