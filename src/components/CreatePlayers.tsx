@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { motion } from 'framer-motion';
 
 // Move Supabase client creation to a separate file
@@ -10,16 +9,13 @@ import {
   insertPlayer,
   deletePlayer,
 } from '../services/playerService';
-
-const supabaseUrl = 'https://emlynmhrnmephemzdehn.supabase.co';
-const supabaseKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtbHlubWhybm1lcGhlbXpkZWhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY2MjIyODIsImV4cCI6MjAyMjE5ODI4Mn0.8xCLIDhvutgdpB4l1rGKV00Sf3MoPGMKKCsqblZAYk4';
-const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from '../services/supabaseClient';
 
 export default function CreatePlayers() {
   const [value, setValue] = useState('');
   const [displayValues, setDisplayValues] = useState([]);
   const [color, setColor] = useState('#000000');
+  const [startGame, setStartGame] = useState(false);
 
   const fetchAndSetPlayers = useCallback(async () => {
     const players = await fetchPlayers();
@@ -29,7 +25,7 @@ export default function CreatePlayers() {
   useEffect(() => {
     fetchAndSetPlayers();
 
-    const test = supabase
+    const fetchPlayersFromSupabase = supabase
       .channel('custom-all-channel')
       .on(
         'postgres_changes',
@@ -40,8 +36,21 @@ export default function CreatePlayers() {
       )
       .subscribe();
 
+    const isGameReady = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin' },
+        async (payload) => {
+          console.log((payload.new as { startGame: any }).startGame, 'payload');
+          setStartGame((payload.new as { startGame: any }).startGame);
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(test);
+      supabase.removeChannel(fetchPlayersFromSupabase);
+      supabase.removeChannel(isGameReady);
     };
   }, [fetchAndSetPlayers]);
 
@@ -147,6 +156,7 @@ export default function CreatePlayers() {
             onChange={(e) => setColor(e.target.value)}
           />
         </div>
+
         <motion.button
           type='submit'
           whileHover={{

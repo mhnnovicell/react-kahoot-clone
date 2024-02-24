@@ -15,7 +15,7 @@ export const fetchPlayers = async () => {
 export const insertPlayer = async (name, color) => {
   const { data, error } = await supabase
     .from('players')
-    .insert({ name, class: color });
+    .insert({ name, class: color, isReady: true });
   if (error) {
     console.error(error);
   }
