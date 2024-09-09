@@ -13,7 +13,7 @@ export default function Countdown() {
   return (
     <div className='flex flex-col items-center self-center justify-center w-full gap-4 count-down-main'>
       <div className='flex flex-col w-16 timer'>
-        <h2 className='my-10 text-2xl font-extrabold leading-none tracking-tight text-left text-gray-900 dark:text-white'>
+        <h2 className='my-10 text-2xl font-extrabold leading-none tracking-tight text-left text-gray-900 '>
           Sekunder:
         </h2>
         <div className='px-2 py-4 overflow-hidden bg-indigo-600 rounded-lg'>

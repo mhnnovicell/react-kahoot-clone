@@ -92,10 +92,10 @@ export default function CreatePlayers() {
     <div className='flex items-center justify-center p-4 mt-5 rounded-xl sm:mt-10 md:p-10'>
       <form className='w-full'>
         <div className='mb-5'>
-          <h1 className='mb-10 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white'>
+          <h1 className='mb-10 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl'>
             OwlHoot🦉
           </h1>
-          <p className='mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-white'>
+          <p className='mb-4 text-3xl font-extrabold leading-none tracking-tight text-white'>
             Spillere:
           </p>
           {displayValues.map((value, index) => (
@@ -115,7 +115,7 @@ export default function CreatePlayers() {
               {value.name}
               <motion.button
                 type='button'
-                className='inline-flex items-center p-1 text-sm font-bold text-white bg-transparent rounded-lg ms-2 hover:bg-white hover:text-white dark:hover:bg-white dark:hover:text-black'
+                className='inline-flex items-center p-1 text-sm font-bold text-white bg-transparent rounded-lg ms-2 hover:bg-white hover:text-white '
                 data-dismiss-target='#badge-dismiss-green'
                 aria-label='Remove'
                 onClick={(e) => {
