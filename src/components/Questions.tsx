@@ -1,26 +1,65 @@
+import { useEffect, useState, lazy } from 'react';
+import { client } from '../services/sanityClient';
+
+const Countdown = lazy(() => import('../components/Countdown'));
+
 export default function Questions() {
+  const [answerData, setAnswers] = useState([]);
+  const [question, setQuestion] = useState('');
+
+  useEffect(() => {
+    let isMounted = true; // Add this line
+
+    if (isMounted) {
+      getQuestionsFromSanity();
+    }
+
+    return () => {
+      isMounted = false; // Add this line
+    };
+  }, []);
+
+  const getQuestionsFromSanity = async () => {
+    try {
+      const query = '*[_type == "questions"]';
+      client.fetch(query).then((questions) => {
+        setQuestion(questions[0].title);
+        questions.forEach((question) => {
+          setAnswers(question.Questions);
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  console.log(answerData, 'questionsdata');
+  console.log(question, 'question');
+
   return (
-    <div className='flex flex-col items-center w-full h-full mb-4'>
-      <h2 className='mb-10 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white'>
-        Hvem i gruppen har haft flest sexpartnere?
+    <div className='flex flex-col items-center w-full h-full p-4 mb-4'>
+      <h1 className='my-10 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white'>
+        OwlHoot🦉
+      </h1>
+      <h2 className='my-10 text-4xl font-extrabold leading-none tracking-tight text-center text-gray-900 md:text-5xl lg:text-5xl dark:text-white'>
+        {question}
       </h2>
-      <form className='flex flex-col items-center justify-center w-full h-full'>
-        <div className='flex w-1/2 my-4'>
-          <button className='w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white bg-red-600 rounded-lg shadow '>
-            <span>👌</span> svar 1
-          </button>
-          <button className='w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow bg-lime-600'>
-            <span>😘</span> Test 2
-          </button>
-        </div>
-        <div className='flex w-1/2 my-4'>
-          <button className='w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow bg-sky-700'>
-            <span>🍆</span> Test 3
-          </button>
-          <button className='w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow bg-fuchsia-700'>
-            <span>💯</span> Test 4
-          </button>
-        </div>
+      <Countdown></Countdown>
+      <form className='flex flex-wrap items-center justify-center w-full h-full lg:w-1/2'>
+        {answerData.map(function (data) {
+          return (
+            <>
+              <div key={data.answer} className='flex w-full my-4 lg:w-1/2'>
+                <button
+                  className='w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow'
+                  style={{ backgroundColor: data.backgroundColor.hex }}
+                >
+                  {data.answer}
+                </button>
+              </div>
+            </>
+          );
+        })}
       </form>
     </div>
   );

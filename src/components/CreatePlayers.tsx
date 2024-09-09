@@ -10,49 +10,13 @@ import {
   deletePlayer,
 } from '../services/playerService';
 import { supabase } from '../services/supabaseClient';
+import { useNavigate } from 'react-router-dom';
 
 export default function CreatePlayers() {
   const [value, setValue] = useState('');
   const [displayValues, setDisplayValues] = useState([]);
   const [color, setColor] = useState('#000000');
   const [startGame, setStartGame] = useState(false);
-
-  const fetchAndSetPlayers = useCallback(async () => {
-    const players = await fetchPlayers();
-    setDisplayValues(players);
-  }, []);
-
-  useEffect(() => {
-    fetchAndSetPlayers();
-
-    const fetchPlayersFromSupabase = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'players' },
-        async (payload) => {
-          fetchAndSetPlayers();
-        }
-      )
-      .subscribe();
-
-    const isGameReady = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'admin' },
-        async (payload) => {
-          console.log((payload.new as { startGame: any }).startGame, 'payload');
-          setStartGame((payload.new as { startGame: any }).startGame);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(fetchPlayersFromSupabase);
-      supabase.removeChannel(isGameReady);
-    };
-  }, [fetchAndSetPlayers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,6 +34,59 @@ export default function CreatePlayers() {
     stiffness: 800,
     duration: 0.5,
   };
+
+  useEffect(() => {
+    let isMounted = true; // Add this line
+
+    const fetchAndSetPlayers = async () => {
+      const players = await fetchPlayers();
+      if (isMounted) setDisplayValues(players);
+    };
+
+    fetchAndSetPlayers();
+
+    const fetchPlayersFromSupabase = supabase
+      .channel('players')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players' },
+        async (payload) => {
+          if (isMounted) fetchAndSetPlayers();
+        }
+      )
+      .subscribe();
+
+    const isGameReady = supabase
+      .channel('admin')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin' },
+        async (payload) => {
+          console.log(payload, 'payload');
+          console.log(
+            (payload.new as { startGame: boolean }).startGame,
+            'payload'
+          );
+          setStartGame((payload.new as { startGame: boolean }).startGame);
+          console.log(startGame, 'startgame');
+        }
+      )
+      .subscribe();
+
+    console.log(isGameReady, 'isgameraeadt');
+
+    return () => {
+      isMounted = false; // Add this line
+      supabase.removeChannel(fetchPlayersFromSupabase);
+      supabase.removeChannel(isGameReady);
+    };
+  }, []);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    startGame ? navigate('/questions') : null;
+  }, [startGame]);
 
   return (
     <div className='flex items-center justify-center p-4 mt-5 rounded-xl sm:mt-10 md:p-10'>
@@ -157,18 +174,35 @@ export default function CreatePlayers() {
           />
         </div>
 
-        <motion.button
-          type='submit'
-          whileHover={{
-            scale: 1.1,
-            transition: { duration: 1 },
-          }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleSubmit}
-          className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
-        >
-          Tilføj
-        </motion.button>
+        {!startGame ? (
+          <motion.button
+            type='submit'
+            whileHover={{
+              scale: 1.1,
+              transition: { duration: 1 },
+            }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleSubmit}
+            className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+          >
+            Tilføj
+          </motion.button>
+        ) : (
+          <>
+            <motion.button
+              type='submit'
+              whileHover={{
+                scale: 1.1,
+                transition: { duration: 1 },
+              }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleSubmit}
+              className='text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+            >
+              Tilføj
+            </motion.button>
+          </>
+        )}
       </form>
     </div>
   );

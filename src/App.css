@@ -1,3 +1,16 @@
-html, body{
-      @apply flex flex-col w-full h-full bg-gradient-to-b from-gray-900 via-purple-900 to-violet-600;
+html,
+body {
+  @apply flex flex-col w-full h-full;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background: #6c4093;
+  background-image: radial-gradient(
+      at 70% 73%,
+      hsl(276, 77%, 65%) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 31% 65%, hsl(287, 37%, 23%) 0px, transparent 50%),
+    radial-gradient(at 49% 52%, hsl(8, 77%, 68%) 0px, transparent 50%),
+    radial-gradient(at 53% 5%, hsl(348, 65%, 30%) 0px, transparent 50%),
+    radial-gradient(at 28% 17%, hsl(269, 70%, 63%) 0px, transparent 50%);
 }

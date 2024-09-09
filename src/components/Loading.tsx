@@ -1,27 +1,10 @@
-import { Suspense, lazy } from 'react';
-import './App.css';
-
-const CreatePlayers = lazy(() => import('./components/CreatePlayers'));
-
-function App() {
-  return (
-    <>
-      <div className='flex flex-col items-center justify-center w-full h-full'>
-        <Suspense fallback={<Loading />}>
-          <CreatePlayers></CreatePlayers>
-        </Suspense>
-      </div>
-    </>
-  );
-}
-
-function Loading() {
+export default function Loading() {
   return (
     <div className='flex items-center justify-center w-56 h-56'>
       <div role='status'>
         <svg
           aria-hidden='true'
-          className='w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600'
+          className='inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-purple-600'
           viewBox='0 0 100 101'
           fill='none'
           xmlns='http://www.w3.org/2000/svg'
@@ -40,5 +23,3 @@ function Loading() {
     </div>
   );
 }
-
-export default App;

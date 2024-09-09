@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import ErrorPage from './ErrorPage.tsx';
-import Questions from './components/Questions';
+import ErrorPage from './pages/ErrorPage.tsx';
+import Page from './pages/Page';
+import QuestionsPage from './pages/QuestionsPage';
+import { storyblokInit, apiPlugin } from '@storyblok/react';
 
 const router = createBrowserRouter([
   {
@@ -14,9 +16,23 @@ const router = createBrowserRouter([
   },
   {
     path: '/questions',
-    element: <Questions />,
+    element: <QuestionsPage />,
   },
 ]);
+
+storyblokInit({
+  accessToken: 'xCC0BnvyC2lrRBesbhslUAtt',
+  use: [apiPlugin],
+  components: {
+    page: Page,
+    questions: QuestionsPage,
+  },
+  apiOptions: {
+    // for spaces located in the US or China:
+    // region: "us" or "cn", // you need to specify the region
+    region: 'eu',
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
