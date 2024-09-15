@@ -16,10 +16,10 @@ export default function Countdown() {
     <>
       <div
         id="toast-bottom-right"
-        class="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4  divide-x rtl:divide-x-reverse  rounded-lg shadow right-5 bottom-5 text-gray-400 divide-gray-700 bg-gray-800"
+        className="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow rtl:divide-x-reverse right-5 bottom-5"
         role="alert"
       >
-        <div class="text-sm font-normal">
+        <div className="text-sm font-normal">
           <p className="mb-2 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
             Sekunder:
           </p>

@@ -66,24 +66,22 @@ export default function Questions() {
       <form className="flex flex-wrap items-center justify-center w-full h-full lg:w-1/2">
         {answerData.map(function (data) {
           return (
-            <>
-              <motion.div
-                whileHover={{
-                  scale: 1.1,
-                  transition: { duration: 1 },
-                }}
-                whileTap={{ scale: 0.9 }}
-                key={data.answer}
-                className="flex w-full my-4 lg:w-1/2"
+            <motion.div
+              whileHover={{
+                scale: 1.1,
+                transition: { duration: 1 },
+              }}
+              whileTap={{ scale: 0.9 }}
+              key={data._key}
+              className="flex w-full my-4 lg:w-1/2"
+            >
+              <button
+                className="w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow"
+                style={{ backgroundColor: data.backgroundColor.hex }}
               >
-                <button
-                  className="w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow"
-                  style={{ backgroundColor: data.backgroundColor.hex }}
-                >
-                  {data.answer}
-                </button>
-              </motion.div>
-            </>
+                {data.answer}
+              </button>
+            </motion.div>
           );
         })}
       </form>
