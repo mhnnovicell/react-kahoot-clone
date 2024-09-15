@@ -35,7 +35,9 @@ export default function Questions() {
       client.fetch(query).then((questions) => {
         console.log(questions, 'questions');
         setQuestion(questions[0].title);
-        setQuestionImage(questions[0].image.asset.url + '?h=500&max-h=600');
+        setQuestionImage(
+          questions[0].image.asset.url + '?h=500&max-h=600&format=webp',
+        );
         questions.forEach((question) => {
           setAnswers(question.Questions);
         });

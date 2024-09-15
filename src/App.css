@@ -1,5 +1,5 @@
-#root {
-  @apply flex flex-col w-full h-full;
+body,
+html {
   background-size: cover;
   background-repeat: no-repeat;
   background: #6c4093;
