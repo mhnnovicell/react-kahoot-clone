@@ -18,6 +18,11 @@ export const insertPlayer = async (name, color) => {
     .insert({ name, class: color, isReady: true });
   if (error) {
     console.error(error);
+  } else {
+    // Add player to sessionStorage
+    const players = JSON.parse(sessionStorage.getItem('players')) || [];
+    players.push({ name, class: color, isReady: true });
+    sessionStorage.setItem('players', JSON.stringify(players));
   }
 };
 
@@ -28,5 +33,10 @@ export const deletePlayer = async (name) => {
     .eq('name', name);
   if (error) {
     console.error(error);
+  } else {
+    // Remove player from sessionStorage
+    const players = JSON.parse(sessionStorage.getItem('players')) || [];
+    const updatedPlayers = players.filter((player) => player.name !== name);
+    sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
   }
 };

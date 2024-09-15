@@ -5,12 +5,11 @@ import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import ErrorPage from './pages/ErrorPage.tsx';
 import QuestionsPage from './pages/QuestionsPage';
-import Login from './pages/Login';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Login />,
+    element: <App />,
     errorElement: <ErrorPage />,
   },
   {
