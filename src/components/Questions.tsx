@@ -78,7 +78,7 @@ export default function Questions() {
               className="flex w-full my-4 lg:w-1/2"
             >
               <button
-                className="w-full h-full p-20 m-4 text-4xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow"
+                className="w-full h-full p-20 m-4 text-3xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow"
                 style={{ backgroundColor: data.backgroundColor.hex }}
               >
                 {data.answer}
