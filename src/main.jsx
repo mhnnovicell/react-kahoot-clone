@@ -5,11 +5,12 @@ import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import ErrorPage from './pages/ErrorPage.tsx';
 import QuestionsPage from './pages/QuestionsPage';
+import Login from './pages/Login';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Login />,
     errorElement: <ErrorPage />,
   },
   {
@@ -21,5 +22,5 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <RouterProvider router={router} />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
