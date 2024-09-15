@@ -1,5 +1,4 @@
-html,
-body {
+#root {
   @apply flex flex-col w-full h-full;
   background-size: cover;
   background-repeat: no-repeat;

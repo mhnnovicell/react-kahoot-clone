@@ -10,15 +10,21 @@ export default function Countdown() {
     }
   }, [seconds]);
 
+  const progressBarWidth = (seconds / 60) * 100; // Calculate progress bar width
+
   return (
-    <div className='flex flex-col items-center self-center justify-center w-full gap-4 count-down-main'>
-      <div className='flex flex-col w-16 timer'>
-        <h2 className='my-10 text-2xl font-extrabold leading-none tracking-tight text-left text-gray-900 '>
-          Sekunder:
-        </h2>
-        <div className='px-2 py-4 overflow-hidden bg-indigo-600 rounded-lg'>
+    <>
+      <div
+        id="toast-bottom-right"
+        class="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4  divide-x rtl:divide-x-reverse  rounded-lg shadow right-5 bottom-5 text-gray-400 divide-gray-700 bg-gray-800"
+        role="alert"
+      >
+        <div class="text-sm font-normal">
+          <p className="mb-2 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
+            Sekunder:
+          </p>
           <h3
-            className={`text-2xl font-semibold text-center text-white countdown-element seconds font-Cormorant ${
+            className={`text-2xl font-extrabold text-white text-center countdown-element seconds font-Cormorant ${
               seconds > 0 ? 'animate-countinsecond' : 'animate-none'
             }`}
           >
@@ -26,6 +32,6 @@ export default function Countdown() {
           </h3>
         </div>
       </div>
-    </div>
+    </>
   );
 }
