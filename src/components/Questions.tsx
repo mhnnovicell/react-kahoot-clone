@@ -53,7 +53,7 @@ export default function Questions() {
   return (
     <div className="flex flex-col items-center w-full h-full p-6 mb-4">
       <h1 className="my-6 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-        OwlHoot🦉
+        Quizazoid 🚀
       </h1>
       <h2 className="my-10 text-4xl font-extrabold leading-none tracking-tight text-center text-gray-900 md:text-5xl lg:text-5xl dark:text-white">
         {question}

@@ -2,5 +2,9 @@ body,
 html {
   background-size: cover;
   background-repeat: no-repeat;
-background: #393646; background-image: radial-gradient(at 85.0% 51.0%, hsl(292, 15%, 34%) 0px, transparent 50%),radial-gradient(at 48.0% 45.0%, hsl(272, 85%, 17%) 0px, transparent 50%),radial-gradient(at 30.0% 33.0%, hsl(332, 66%, 29%) 0px, transparent 50%),radial-gradient(at 51.0% 92.0%, hsl(282, 69%, 47%) 0px, transparent 50%),radial-gradient(at 97.0% 40.0%, hsl(232, 86%, 48%) 0px, transparent 50%)
+  background: radial-gradient(at 20% 30%, #f53b2a, transparent),
+    radial-gradient(at 80% 70%, #fbe56b, transparent),
+    radial-gradient(at 50% 50%, #000000, transparent),
+    radial-gradient(at 30% 80%, #b7e4ea, transparent),
+    radial-gradient(at 70% 20%, #ae2724, transparent);
 }
