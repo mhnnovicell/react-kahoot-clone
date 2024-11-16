@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { fetchPlayers } from '../services/playerService';
 
 const Countdown = lazy(() => import('../components/Countdown'));
 
@@ -61,8 +62,23 @@ export default function Questions() {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkAndFetchPlayers = async () => {
+      let players = JSON.parse(sessionStorage.getItem('players')) || [];
+
+      if (players.length === 0) {
+        // Fetch players from Supabase if not found in sessionStorage
+        players = await fetchPlayers();
+        console.log(players, 'players');
+        sessionStorage.setItem('players', JSON.stringify(players));
+      }
+    };
+
+    checkAndFetchPlayers();
+  }, []);
+
   const handleClick = async (isCorrect) => {
-    const players = JSON.parse(sessionStorage.getItem('players')) || [];
+    let players = JSON.parse(sessionStorage.getItem('players')) || [];
 
     const playerId = players[0].id;
     if (!playerId) {
