@@ -78,11 +78,11 @@ export default function Questions() {
   }, []);
 
   const handleClick = async (isCorrect) => {
+    event.preventDefault();
     let players = JSON.parse(sessionStorage.getItem('players')) || [];
 
-    const playerId = players[0].id;
-    if (!playerId) {
-      console.error('Player ID not found');
+    if (players.length === 0) {
+      console.error('No players found');
       return;
     }
 
@@ -101,22 +101,28 @@ export default function Questions() {
 
     setPoints((prevPoints) => prevPoints + earnedPoints);
 
+    // Needs to run in firefox otherwise this code doesent work for some reason...
     try {
-      // Update points in Supabase
-      const { data, error } = await supabase
-        .from('players')
-        .update({ points: earnedPoints })
-        .eq('id', playerId)
-        .select();
+      // Update points for each player in Supabase
+      const updates = players.map(async (player) => {
+        const { data, error } = await supabase
+          .from('players')
+          .update({ points: earnedPoints })
+          .eq('id', player.id)
+          .select('*');
 
-      if (error) {
-        throw error;
-      }
+        if (error) {
+          throw error;
+        }
+
+        return data;
+      });
+
+      const results = await Promise.all(updates);
+      console.log('Points updated for all players:', results);
+      navigate(`/scoreboard/:id`);
     } catch (error) {
       console.error('Error updating points:', error);
-    } finally {
-      console.log('Points updated:', data);
-      navigate(`/scoreboard/:id`);
     }
   };
 

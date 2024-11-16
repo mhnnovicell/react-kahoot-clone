@@ -38,5 +38,5 @@ html {
 }
 
 #root {
-  @apply w-full h-full;
+  @apply w-full h-full min-h-dvh;
 }
