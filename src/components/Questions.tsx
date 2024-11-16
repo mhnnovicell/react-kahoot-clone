@@ -128,14 +128,14 @@ export default function Questions() {
 
   return (
     <div className="flex flex-col items-center w-full h-full p-6 mb-4">
-      <div className="flex items-center justify-center w-full h-full p-6 mb-4">
+      <div className="flex items-center justify-center w-full h-full p-4">
         <h1 className="text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
           Quizazoid
         </h1>
         <img className="w-32 h-32 " src={logo1} alt="image description" />
       </div>
 
-      <h2 className="my-10 text-4xl font-extrabold leading-none tracking-tight text-center text-transparent from-indigo-700 via-pink-700 to-fuchsia-700 bg-gradient-to-r bg-clip-text md:text-5xl ">
+      <h2 className="my-6 text-4xl font-extrabold leading-none tracking-tight text-center text-white md:my-10 md:text-5xl ">
         {question}
       </h2>
       <Countdown></Countdown>
