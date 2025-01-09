@@ -111,13 +111,15 @@ export default function Questions() {
           .from('players')
           .update({ points: earnedPoints })
           .eq('id', players[0].id)
-          .select('*');
+          .select();
 
         if (error) {
           throw error;
         }
 
-        return data;
+        if (players[0].id === player.id) {
+          return data;
+        }
       });
 
       const results = await Promise.all(updates);
