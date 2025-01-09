@@ -86,6 +86,8 @@ export default function Questions() {
       return;
     }
 
+    console.log(players, 'players');
+
     const endTime = Date.now();
     const timeTaken = (endTime - startTime) / 1000; // Time in seconds
 
@@ -108,7 +110,7 @@ export default function Questions() {
         const { data, error } = await supabase
           .from('players')
           .update({ points: earnedPoints })
-          .eq('id', player.id)
+          .eq('id', players[0].id)
           .select('*');
 
         if (error) {
