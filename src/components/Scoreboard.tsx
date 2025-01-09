@@ -43,6 +43,25 @@ export default function Scoreboard() {
     };
 
     checkAndFetchPlayers();
+
+    const subscription = supabase
+      .channel('players')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'players',
+        },
+        (payload) => {
+          console.log(payload, 'payload');
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
   const { id } = useParams();
