@@ -232,7 +232,7 @@ export default function CreatePlayers() {
           />
           <datalist id="colors">
             <option>#ef4444</option>
-            <option>#a3e635</option>
+            <option>#a16207</option>
             <option>#38bdf8</option>
             <option>#6366f1</option>
             <option>#e879f9</option>
@@ -241,6 +241,9 @@ export default function CreatePlayers() {
             <option>#065f46</option>
             <option>#4338ca</option>
             <option>#ea580c</option>
+            <option>#06b6d4</option>
+            <option>#9333ea</option>
+            <option>#9f1239</option>
           </datalist>
         </div>
 
