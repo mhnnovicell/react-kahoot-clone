@@ -127,7 +127,9 @@ export default function Questions() {
 
       const results = await Promise.all(updates);
       console.log('Points updated for all players:', results);
-      // navigate(`/scoreboard/${id}`);
+      window.setTimeout(() => {
+        navigate(`/scoreboard/${id}`);
+      }, 3500);
     } catch (error) {
       console.error('Error updating points:', error);
     }

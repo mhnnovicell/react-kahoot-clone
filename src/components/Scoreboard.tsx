@@ -103,7 +103,7 @@ export default function Scoreboard() {
                   >
                     {data.name}
                     <span
-                      className={`${backgroundColor} w-full text-white  ml-2 inline-flex justify-start items-center text-sm font-extrabold me-2 px-2 py-0.5 rounded-full`}
+                      className={`${backgroundColor} w-auto text-white  ml-2 inline-flex justify-center self-center items-center text-center text-sm font-extrabold me-2 px-3  rounded-full`}
                     >
                       {data.points}
                     </span>
