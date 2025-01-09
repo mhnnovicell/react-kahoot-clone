@@ -103,23 +103,20 @@ export default function Questions() {
 
     setPoints((prevPoints) => prevPoints + earnedPoints);
 
-    // Needs to run in firefox otherwise this code doesent work for some reason...
     try {
       // Update points for each player in Supabase
       const updates = players.map(async (player) => {
         const { data, error } = await supabase
           .from('players')
-          .update({ points: earnedPoints })
-          .eq('id', players[0].id)
+          .update({ points: player.points + earnedPoints })
+          .eq('id', player.id)
           .select('*');
 
         if (error) {
           throw error;
         }
 
-        if (players[0].id === player.id) {
-          return data;
-        }
+        return data;
       });
 
       const results = await Promise.all(updates);
