@@ -55,6 +55,7 @@ export default function Scoreboard() {
         },
         (payload) => {
           console.log(payload, 'payload');
+          checkAndFetchPlayers();
         },
       )
       .subscribe();
