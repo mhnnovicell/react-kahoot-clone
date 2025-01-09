@@ -15,16 +15,16 @@ export default function Countdown() {
   return (
     <>
       <div
-        id="countdown"
-        className="z-50 flex items-center justify-center w-full p-2 mt-2 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow flex-nowrap"
+        id="toast-bottom-right"
+        className="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow rtl:divide-x-reverse right-5 bottom-5"
         role="alert"
       >
-        <div className="flex items-center justify-center text-sm font-normal text-center">
-          <p className="mb-0 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
+        <div className="text-sm font-normal">
+          <p className="mb-2 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
             Sekunder:
           </p>
           <h3
-            className={`text-2xl ml-2 font-extrabold text-white text-center countdown-element seconds font-Cormorant ${
+            className={`text-2xl font-extrabold text-white text-center countdown-element seconds font-Cormorant ${
               seconds > 0 ? 'animate-countinsecond' : 'animate-none'
             }`}
           >

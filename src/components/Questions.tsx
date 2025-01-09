@@ -15,6 +15,7 @@ export default function Questions() {
   const { id } = useParams(); // Get the route parameter
   const [startTime, setStartTime] = useState(Date.now());
   const [points, setPoints] = useState(0);
+  const [correctAnswer, setCorrectAnswer] = useState(false);
 
   useEffect(() => {
     let isMounted = true; // Add this line
@@ -97,6 +98,10 @@ export default function Questions() {
     if (isCorrect) {
       earnedPoints = Math.max(1000 - timeTaken * 100, 0); // Example scoring logic
       earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
+      setCorrectAnswer(true);
+    } else {
+      earnedPoints = 0;
+      setCorrectAnswer(false);
     }
 
     console.log(earnedPoints, 'earnedPoints');
@@ -121,7 +126,7 @@ export default function Questions() {
 
       const results = await Promise.all(updates);
       console.log('Points updated for all players:', results);
-      navigate(`/scoreboard/${id}`);
+      // navigate(`/scoreboard/${id}`);
     } catch (error) {
       console.error('Error updating points:', error);
     }
@@ -139,7 +144,6 @@ export default function Questions() {
       <h2 className="my-6 text-4xl font-extrabold leading-none tracking-tight text-center text-white md:my-10 md:text-5xl ">
         {question}
       </h2>
-      <Countdown></Countdown>
       <img
         className="h-auto max-w-full my-4 rounded-lg"
         src={questionImage}
@@ -151,15 +155,15 @@ export default function Questions() {
           return (
             <motion.div
               whileHover={{
-                scale: 1.1,
+                scale: 1,
                 transition: { duration: 1 },
               }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.5 }}
               key={data._key}
-              className="flex w-full my-4 lg:w-1/2"
+              className="flex w-1/2 h-full"
             >
               <button
-                className="w-full h-full p-20 m-4 text-3xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow"
+                className="w-full h-full p-6 my-1 mr-1 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
                 style={{ backgroundColor: data.backgroundColor.hex }}
                 onClick={() => handleClick(data.korrekt)}
               >
@@ -169,6 +173,7 @@ export default function Questions() {
           );
         })}
       </form>
+      <Countdown></Countdown>
     </div>
   );
 }
