@@ -1,37 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
-export default function Countdown() {
-  const [seconds, setSeconds] = useState(60); // Set initial countdown value
-
-  useEffect(() => {
-    if (seconds > 0) {
-      const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [seconds]);
-
-  const progressBarWidth = (seconds / 60) * 100; // Calculate progress bar width
-
+export default function WrongAnswer() {
   return (
-    <>
-      <div
-        id="toast-bottom-right"
-        className="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow rtl:divide-x-reverse right-5 bottom-5"
-        role="alert"
-      >
-        <div className="text-sm font-normal">
-          <p className="mb-2 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
-            Sekunder:
-          </p>
-          <h3
-            className={`text-2xl font-extrabold text-white text-center countdown-element seconds font-Cormorant ${
-              seconds > 0 ? 'animate-countinsecond' : 'animate-none'
-            }`}
-          >
-            {seconds}
-          </h3>
-        </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 3, ease: 'circIn' }}
+      className="flex w-full h-full mt-1.5 flex-nowrap"
+    >
+      <div className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white bg-red-700 rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap">
+        <span className="mr-1">Forkert</span>
+        <span>&#128546;</span>
       </div>
-    </>
+    </motion.div>
   );
 }

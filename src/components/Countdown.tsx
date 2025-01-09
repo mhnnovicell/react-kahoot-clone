@@ -16,7 +16,7 @@ export default function Countdown() {
     <>
       <div
         id="countdown"
-        className="z-50 flex items-center justify-center w-full p-2 mt-2 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow flex-nowrap"
+        className="z-50 flex items-center justify-center w-full p-2 mt-3 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow flex-nowrap"
         role="alert"
       >
         <div className="flex items-center justify-center text-sm font-normal text-center">

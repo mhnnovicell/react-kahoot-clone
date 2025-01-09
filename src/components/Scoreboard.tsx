@@ -78,7 +78,7 @@ export default function Scoreboard() {
   return (
     <>
       <div className="w-full h-full d-flex">
-        <div className="flex items-center justify-center w-full h-full p-6 mb-4">
+        <div className="flex items-center justify-center w-full h-full p-4">
           <h1 className="text-4xl font-extrabold leading-none tracking-tight text-center text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
             Quizazoid
           </h1>
@@ -86,48 +86,30 @@ export default function Scoreboard() {
         </div>
 
         <div className="flex flex-col items-center self-center justify-center w-full h-full p-6">
-          <h2 className="my-4 text-4xl font-extrabold leading-none tracking-tight text-left text-gray-900 md:text-5xl lg:text-5xl dark:text-white">
-            Scoreboard
-          </h2>
-          <div className="relative flex items-center justify-center w-full mt-6 overflow-x-auto rounded-lg shadow-lg">
-            <table className="w-full text-sm text-left text-white ">
-              <thead
-                className={`text-xs text-white font-bold uppercase ${backgroundColor} border-b `}
-              >
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 leading-none tracking-tight"
+          <div
+            className={`${backgroundColor} w-full p-6 flex flex-col  rounded-lg shadow`}
+          >
+            <h2 className="mb-4 text-5xl font-extrabold leading-none tracking-tight text-left text-gray-900 md:text-5xl lg:text-5xl dark:text-white">
+              Scoreboard
+            </h2>
+            {playersList
+              .sort((a, b) => b.points - a.points) // Sort players by points in descending order
+              .map(function (data) {
+                return (
+                  <div
+                    className="rounded-full w-1/2 my-1 inline-flex items-center max-w-xs px-5 py-2.5 text-sm font-medium text-center text-white"
+                    key={data.id}
+                    style={{ backgroundColor: data.class }}
                   >
-                    Spillere
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 leading-none tracking-tight"
-                  >
-                    Point
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {playersList.map(function (data) {
-                  return (
-                    <tr className={`${backgroundColor} border-b`} key={data.id}>
-                      <td className="w-1/2 px-6 py-4 font-bold leading-none tracking-tight text-gray-900 whitespace-nowrap dark:text-white">
-                        {data.name}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center mt-4">
-                          <span className="text-sm font-bold leading-none tracking-tight text-white">
-                            {data.points}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    {data.name}
+                    <span
+                      className={`${backgroundColor} w-full text-white  ml-2 inline-flex justify-start items-center text-sm font-extrabold me-2 px-2 py-0.5 rounded-full`}
+                    >
+                      {data.points}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>

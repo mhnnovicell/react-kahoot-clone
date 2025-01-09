@@ -5,6 +5,8 @@ import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { fetchPlayers } from '../services/playerService';
+import WrongAnswer from '../components/WrongAnswer';
+import CorrectAnswer from '../components/CorrectAnswer';
 
 const Countdown = lazy(() => import('../components/Countdown'));
 
@@ -15,7 +17,7 @@ export default function Questions() {
   const { id } = useParams(); // Get the route parameter
   const [startTime, setStartTime] = useState(Date.now());
   const [points, setPoints] = useState(0);
-  const [correctAnswer, setCorrectAnswer] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   useEffect(() => {
     let isMounted = true; // Add this line
@@ -78,8 +80,7 @@ export default function Questions() {
     checkAndFetchPlayers();
   }, []);
 
-  const handleClick = async (isCorrect) => {
-    event.preventDefault();
+  const handleClick = async (isCorrect, answerKey) => {
     let players = JSON.parse(sessionStorage.getItem('players')) || [];
 
     if (players.length === 0) {
@@ -98,11 +99,11 @@ export default function Questions() {
     if (isCorrect) {
       earnedPoints = Math.max(1000 - timeTaken * 100, 0); // Example scoring logic
       earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
-      setCorrectAnswer(true);
     } else {
       earnedPoints = 0;
-      setCorrectAnswer(false);
     }
+
+    setSelectedAnswer(answerKey); // Set the selected answer key if incorrect
 
     console.log(earnedPoints, 'earnedPoints');
 
@@ -145,7 +146,7 @@ export default function Questions() {
         {question}
       </h2>
       <img
-        className="h-auto max-w-full my-4 rounded-lg"
+        className="w-full h-auto max-w-full my-4 rounded-lg"
         src={questionImage}
         alt={question}
       />
@@ -160,15 +161,27 @@ export default function Questions() {
               }}
               whileTap={{ scale: 0.5 }}
               key={data._key}
-              className="flex w-1/2 h-full"
+              className="flex w-full h-full mt-1.5 flex-nowrap"
             >
-              <button
-                className="w-full h-full p-6 my-1 mr-1 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
-                style={{ backgroundColor: data.backgroundColor.hex }}
-                onClick={() => handleClick(data.korrekt)}
-              >
-                {data.answer}
-              </button>
+              {selectedAnswer === data._key ? (
+                data.korrekt ? (
+                  <CorrectAnswer />
+                ) : (
+                  <WrongAnswer />
+                )
+              ) : (
+                <button
+                  className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
+                  style={{ backgroundColor: data.backgroundColor.hex }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleClick(data.korrekt, data._key);
+                  }}
+                  type="button"
+                >
+                  {data.answer}
+                </button>
+              )}
             </motion.div>
           );
         })}

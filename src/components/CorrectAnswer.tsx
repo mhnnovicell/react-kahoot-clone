@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export default function CorrectAnswer() {
   return (
-    <>
-      <div
-        id="toast-bottom-right"
-        className="fixed flex items-center justify-center w-1/3 max-w-xs p-4 space-x-4 text-gray-400 bg-gray-800 divide-x divide-gray-700 rounded-lg shadow rtl:divide-x-reverse right-5 bottom-5"
-        role="alert"
-      >
-        <div className="text-sm font-normal">
-          <p className="mb-2 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
-            Sekunder:
-          </p>
-          <h3
-            className={`text-2xl font-extrabold text-white text-center countdown-element seconds font-Cormorant ${
-              seconds > 0 ? 'animate-countinsecond' : 'animate-none'
-            }`}
-          >
-            {seconds}
-          </h3>
-        </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 3, ease: 'circIn' }}
+      className="flex w-full h-full mt-1.5 flex-nowrap items-center self-center justify-center"
+    >
+      <div className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white bg-green-700 rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap">
+        <span className="mr-1">Korrekt</span>
+        <span>&#127881;</span>
       </div>
-    </>
+    </motion.div>
   );
 }
