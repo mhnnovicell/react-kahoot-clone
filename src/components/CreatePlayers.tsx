@@ -19,15 +19,27 @@ export default function CreatePlayers() {
   const [displayValues, setDisplayValues] = useState([]);
   const [color, setColor] = useState('#000000');
   const [startGame, setStartGame] = useState(false);
+  const [playerExists, setPlayerExists] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const players = JSON.parse(sessionStorage.getItem('players')) || [];
+    const playerExists = players.some((player) => player.name === value);
+
+    if (playerExists) {
+      setPlayerExists(true);
+      return;
+    }
+
     await insertPlayer(value, color);
+    setPlayerExists(true);
   };
 
   const removePlayer = useCallback(async (name) => {
     console.log(name, 'name');
     await deletePlayer(name.name);
+    setPlayerExists(false);
+    setValue('');
   }, []);
 
   const spring = {
@@ -38,6 +50,62 @@ export default function CreatePlayers() {
   };
 
   useEffect(() => {
+    const isGameReady = supabase
+      .channel('admin')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin' },
+        async (payload) => {
+          setStartGame((payload.new as { startGame: boolean }).startGame);
+        },
+      )
+      .subscribe();
+
+    const buttonDisabledState = supabase
+      .channel('players')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'players' },
+        (payload) => {
+          const playerId = payload.new.id;
+          const storedPlayers =
+            JSON.parse(sessionStorage.getItem('players')) || [];
+          const playerExists = storedPlayers.some(
+            (player) => player.id === playerId,
+          );
+
+          if (playerExists) {
+            setPlayerExists(true);
+          }
+        },
+      )
+      .subscribe();
+
+    // Check if player exists on initial load
+    const checkPlayerExistsOnLoad = async () => {
+      const storedPlayers = JSON.parse(sessionStorage.getItem('players')) || [];
+      if (storedPlayers.length > 0) {
+        const { data, error } = await supabase
+          .from('players')
+          .select('id')
+          .in(
+            'id',
+            storedPlayers.map((player) => player.id),
+          );
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        if (data.length > 0) {
+          setPlayerExists(true);
+        }
+      }
+    };
+
+    checkPlayerExistsOnLoad();
+
     let isMounted = true; // Add this line
 
     const fetchAndSetPlayers = async () => {
@@ -59,29 +127,11 @@ export default function CreatePlayers() {
       )
       .subscribe();
 
-    const isGameReady = supabase
-      .channel('admin')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'admin' },
-        async (payload) => {
-          console.log(payload, 'payload');
-          console.log(
-            (payload.new as { startGame: boolean }).startGame,
-            'payload',
-          );
-          setStartGame((payload.new as { startGame: boolean }).startGame);
-          console.log(startGame, 'startgame');
-        },
-      )
-      .subscribe();
-
-    console.log(isGameReady, 'isgameraeadt');
-
     return () => {
       isMounted = false; // Add this line
       supabase.removeChannel(fetchPlayersFromSupabase);
       supabase.removeChannel(isGameReady);
+      supabase.removeChannel(buttonDisabledState);
     };
   }, []);
 
@@ -201,7 +251,8 @@ export default function CreatePlayers() {
           }}
           whileTap={{ scale: 0.9 }}
           onClick={handleSubmit}
-          className="text-white bg-gradient-to-r mt-2 from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+          disabled={playerExists}
+          className="text-white bg-gradient-to-r mt-2 from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:outline-none focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 disabled:bg-gray-400 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed"
         >
           Tilføj
         </motion.button>

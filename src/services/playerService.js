@@ -13,13 +13,20 @@ export const fetchPlayers = async () => {
     id: player.id,
     points: player.points,
     createdAt: player.created_at,
+    hasBeenAdded: player.hasBeenAdded,
   }));
 };
 
 export const insertPlayer = async (name, color) => {
   const { data, error } = await supabase
     .from('players')
-    .insert({ name, class: color, isReady: true, points: 0 })
+    .insert({
+      name,
+      class: color,
+      isReady: true,
+      points: 0,
+      hasBeenAdded: true,
+    })
     .select();
   if (error) {
     console.error(error);
