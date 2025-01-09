@@ -23,6 +23,8 @@ export default function CreatePlayers() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await insertPlayer(value, color);
+
     const players = JSON.parse(sessionStorage.getItem('players')) || [];
     const playerExists = players.some((player) => player.name === value);
 
@@ -31,7 +33,6 @@ export default function CreatePlayers() {
       return;
     }
 
-    await insertPlayer(value, color);
     setPlayerExists(true);
   };
 
