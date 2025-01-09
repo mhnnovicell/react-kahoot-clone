@@ -108,7 +108,7 @@ export default function Questions() {
       const updates = players.map(async (player) => {
         const { data, error } = await supabase
           .from('players')
-          .update({ points: player.points + earnedPoints })
+          .update({ points: earnedPoints })
           .eq('id', player.id)
           .select('*');
 
