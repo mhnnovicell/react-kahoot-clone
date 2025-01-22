@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy } from 'react';
+import { useEffect, useState } from 'react';
 import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
@@ -23,6 +23,9 @@ const getRandomBackgroundColor = () => {
 export default function Scoreboard() {
   const [backgroundColor, setBackgroundColor] = useState('');
   const [playersList, setPlayersList] = useState([]);
+  const { id } = useParams();
+  const currentId = parseInt(id, 10);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setBackgroundColor(getRandomBackgroundColor());
@@ -60,18 +63,16 @@ export default function Scoreboard() {
       )
       .subscribe();
 
+    const nextId = currentId + 1;
+
+    window.setTimeout(() => {
+      navigate(`/questions/${nextId}`);
+    }, 6000);
+
     return () => {
       supabase.removeChannel(subscription);
     };
   }, []);
-
-  const { id } = useParams();
-  const currentId = parseInt(id, 10);
-
-  const handleClick = () => {
-    const nextId = currentId + 1;
-    navigate(`/scoreboard/${nextId}`);
-  };
 
   console.log(playersList, 'playerslist');
 
@@ -97,13 +98,13 @@ export default function Scoreboard() {
               .map(function (data) {
                 return (
                   <div
-                    className="rounded-full w-1/2 my-1 inline-flex items-center max-w-xs px-5 py-2.5 text-sm font-medium text-center text-white"
+                    className="rounded-full w-3/5 my-1 flex justify-between items-center max-w-lg min-w-fit px-5 py-2.5 text-sm font-medium text-center text-white"
                     key={data.id}
                     style={{ backgroundColor: data.class }}
                   >
                     {data.name}
                     <span
-                      className={`${backgroundColor} w-auto text-white  ml-2 inline-flex justify-center self-center items-center text-center text-sm font-extrabold me-2 px-3  rounded-full`}
+                      className={`bg-slate-700 w-auto text-white inline-flex justify-center self-center items-center text-center text-sm font-extrabold px-3 rounded-full`}
                     >
                       {data.points}
                     </span>

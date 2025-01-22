@@ -52,7 +52,7 @@ export default function Questions() {
 
         setQuestion(questions[id].title);
         setQuestionImage(
-          questions[id].image.asset.url + '?h=500&max-h=600&format=webp',
+          questions[id].image.asset.url + '?h=600&max-h=600&format=webp',
         );
         setAnswers(questions[id].Questions);
       });
@@ -97,7 +97,7 @@ export default function Questions() {
 
     let earnedPoints = 0;
     if (isCorrect) {
-      earnedPoints = Math.max(1000 - timeTaken * 100, 0); // Example scoring logic
+      earnedPoints = Math.max(1200 - timeTaken * 100, 0); // Example scoring logic
       earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
     } else {
       earnedPoints = 0;
@@ -109,18 +109,25 @@ export default function Questions() {
 
     setPoints((prevPoints) => prevPoints + earnedPoints);
 
+    console.log(points, 'points');
+
     try {
       // Update points for each player in Supabase
       const updates = players.map(async (player) => {
         const { data, error } = await supabase
           .from('players')
-          .update({ points: earnedPoints })
+          .update({ points: player.points + earnedPoints })
           .eq('id', player.id)
           .select('*');
 
         if (error) {
           throw error;
         }
+
+        console.log(
+          player.points + earnedPoints,
+          'player.points + earnedPoints ',
+        );
 
         return data;
       });
