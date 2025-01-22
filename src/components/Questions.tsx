@@ -158,6 +158,7 @@ export default function Questions() {
         className="w-full h-auto max-w-full my-4 rounded-lg"
         src={questionImage}
         alt={question}
+        loading="eager"
       />
 
       <form className="flex flex-wrap items-center justify-center w-full h-full lg:w-1/2">
