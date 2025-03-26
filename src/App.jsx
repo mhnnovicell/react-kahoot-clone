@@ -1,5 +1,4 @@
 import { lazy } from 'react';
-import './App.css';
 
 const CreatePlayers = lazy(() => import('./components/CreatePlayers'));
 

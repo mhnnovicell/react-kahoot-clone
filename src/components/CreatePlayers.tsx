@@ -150,57 +150,61 @@ export default function CreatePlayers() {
             <h1 className="text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
               Quizazoid
             </h1>
-            <img className="w-32 h-32 " src={logo1} alt="image description" />
+            <img className="w-32 h-32 " src={logo1} alt="Logo" />
           </div>
           <p className="mb-4 text-3xl font-extrabold leading-none tracking-tight text-white">
             Spillere:
           </p>
-          {displayValues.map((value, index) => (
-            <motion.div
-              key={index}
-              id={value.name}
-              className="inline-flex items-center px-2 py-1 m-1 text-sm font-bold text-white rounded"
-              style={{ backgroundColor: value.class }}
-              initial={['visible', 'active']}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              exit={{ opacity: 0 }}
-              transition={spring}
-              animate={['visible', 'active']}
-              layout
-            >
-              {value.name}
-              <motion.button
-                type="button"
-                className="inline-flex items-center p-1 text-sm font-bold text-white bg-transparent rounded-lg ms-2 hover:bg-black hover:text-white "
-                data-dismiss-target="#badge-dismiss-green"
-                aria-label="Remove"
-                onClick={(e) => {
-                  removePlayer(value);
-                }}
-                whileHover={{
-                  scale: 1.1,
-                  transition: { duration: 1 },
-                }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          {displayValues.length === 0 ? (
+            <p className="text-white">Ingen spillere fundet</p>
+          ) : (
+            displayValues.map((value, index) => (
+              <motion.div
+                key={index}
+                id={value.name}
+                className="inline-flex items-center px-2 py-1 m-1 text-sm font-bold text-white rounded"
+                style={{ backgroundColor: value.class }}
+                initial={['visible', 'active']}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                exit={{ opacity: 0 }}
+                transition={spring}
+                animate={['visible', 'active']}
+                layout
               >
-                <svg
-                  className="w-3 h-3 font-bold stroke-2 "
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 14 14"
+                {value.name}
+                <motion.button
+                  type="button"
+                  className="inline-flex items-center p-1 text-sm font-bold text-white bg-transparent rounded-lg ms-2 hover:bg-black hover:text-white "
+                  data-dismiss-target="#badge-dismiss-green"
+                  aria-label="Remove"
+                  onClick={(e) => {
+                    removePlayer(value);
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    transition: { duration: 1 },
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
-                  <path
-                    stroke="currentColor"
-                    d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                  />
-                </svg>
-                <span className="sr-only">Remove badge</span>
-              </motion.button>
-            </motion.div>
-          ))}
+                  <svg
+                    className="w-3 h-3 font-bold stroke-2 "
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      stroke="currentColor"
+                      d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                    />
+                  </svg>
+                  <span className="sr-only">Remove badge</span>
+                </motion.button>
+              </motion.div>
+            ))
+          )}
           <label
             htmlFor="name"
             className="block my-4 text-sm font-medium text-white"

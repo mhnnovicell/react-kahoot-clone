@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy } from 'react';
+import { useEffect, useState, lazy, useCallback, useMemo } from 'react';
 import { client } from '../services/sanityClient';
 import { motion } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
@@ -7,6 +7,7 @@ import { supabase } from '../services/supabaseClient';
 import { fetchPlayers } from '../services/playerService';
 import WrongAnswer from '../components/WrongAnswer';
 import CorrectAnswer from '../components/CorrectAnswer';
+import CorrectAnswerWithName from '../components/CorrectAnswerWithName';
 
 const Countdown = lazy(() => import('../components/Countdown'));
 
@@ -18,16 +19,19 @@ export default function Questions() {
   const [startTime, setStartTime] = useState(Date.now());
   const [points, setPoints] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [clickedAnswer, setClickedAnswer] = useState(null);
+  const [correctAnswerKey, setCorrectAnswerKey] = useState(null);
+  const [addedPoints, setAddedPoints] = useState(0); // New state for added points
 
   useEffect(() => {
-    let isMounted = true; // Add this line
+    let isMounted = true;
 
     if (isMounted) {
       getQuestionsFromSanity();
     }
 
     return () => {
-      isMounted = false; // Add this line
+      isMounted = false;
     };
   }, []);
 
@@ -80,67 +84,131 @@ export default function Questions() {
     checkAndFetchPlayers();
   }, []);
 
-  const handleClick = async (isCorrect, answerKey) => {
-    let players = JSON.parse(sessionStorage.getItem('players')) || [];
+  const handleClick = useCallback(
+    async (isCorrect, answerKey) => {
+      setClickedAnswer(answerKey);
+      let players = JSON.parse(sessionStorage.getItem('players')) || [];
 
-    if (players.length === 0) {
-      console.error('No players found');
-      return;
-    }
+      if (players.length === 0) {
+        console.error('No players found');
+        return;
+      }
 
-    console.log(players, 'players');
+      console.log(players, 'players');
 
-    const endTime = Date.now();
-    const timeTaken = (endTime - startTime) / 1000; // Time in seconds
+      const endTime = Date.now();
+      const timeTaken = (endTime - startTime) / 1000; // Time in seconds
 
-    console.log(isCorrect, 'isCorrect');
+      console.log(isCorrect, 'isCorrect');
 
-    let earnedPoints = 0;
-    if (isCorrect) {
-      earnedPoints = Math.max(1200 - timeTaken * 100, 0); // Example scoring logic
-      earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
-    } else {
-      earnedPoints = 0;
-    }
+      let earnedPoints = 0;
+      if (isCorrect) {
+        earnedPoints = Math.max(1200 - timeTaken * 100, 0); // Example scoring logic
+        earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
+      } else {
+        earnedPoints = 0;
+        // Find the correct answer key
+        const correctAnswer = answerData.find((data) => data.korrekt);
+        setCorrectAnswerKey(correctAnswer._key);
+      }
 
-    setSelectedAnswer(answerKey); // Set the selected answer key if incorrect
+      setSelectedAnswer(answerKey); // Set the selected answer key
 
-    console.log(earnedPoints, 'earnedPoints');
+      console.log(earnedPoints, 'earnedPoints');
 
-    setPoints((prevPoints) => prevPoints + earnedPoints);
+      setPoints((prevPoints) => prevPoints + earnedPoints);
+      setAddedPoints(earnedPoints); // Set the added points
 
-    console.log(points, 'points');
+      console.log(points, 'points');
 
-    try {
-      // Update points for each player in Supabase
-      const updates = players.map(async (player) => {
-        const { data, error } = await supabase
-          .from('players')
-          .update({ points: player.points + earnedPoints })
-          .eq('id', player.id)
-          .select('*');
+      try {
+        // Update points for each player in Supabase
+        const updates = players.map(async (player) => {
+          const { data, error } = await supabase
+            .from('players')
+            .update({
+              points: player.points + earnedPoints,
+              previousPoints: player.points,
+              addedPoints: earnedPoints,
+            })
+            .eq('id', player.id)
+            .select('*');
 
-        if (error) {
-          throw error;
-        }
+          if (error) {
+            throw error;
+          }
 
-        console.log(
-          player.points + earnedPoints,
-          'player.points + earnedPoints ',
-        );
+          console.log(
+            player.points + earnedPoints,
+            'player.points + earnedPoints ',
+          );
 
-        return data;
-      });
+          return data;
+        });
 
-      const results = await Promise.all(updates);
-      console.log('Points updated for all players:', results);
-      window.setTimeout(() => {
-        navigate(`/scoreboard/${id}`);
-      }, 3500);
-    } catch (error) {
-      console.error('Error updating points:', error);
-    }
-  };
+        const results = await Promise.all(updates);
+        console.log('Points updated for all players:', results);
+        window.setTimeout(() => {
+          navigate(`/scoreboard/${id}`);
+        }, 3500);
+      } catch (error) {
+        console.error('Error updating points:', error);
+      }
+    },
+    [answerData, startTime, navigate, id],
+  );
+
+  const renderAnswer = useCallback(
+    (data) => {
+      console.log('Rendering answer:', data);
+
+      return (
+        <motion.div
+          whileHover={{
+            scale: 1,
+            transition: { duration: 1 },
+          }}
+          whileTap={{ scale: 0.5 }}
+          key={data._key}
+          className={`flex w-full h-full mt-1.5 flex-nowrap ${
+            clickedAnswer &&
+            clickedAnswer !== data._key &&
+            correctAnswerKey !== data._key
+              ? 'opacity-20'
+              : ''
+          }`}
+        >
+          {selectedAnswer === data._key ? (
+            data.korrekt ? (
+              <CorrectAnswer />
+            ) : (
+              <WrongAnswer />
+            )
+          ) : correctAnswerKey && correctAnswerKey === data._key ? (
+            <CorrectAnswerWithName name={data.answer} />
+          ) : (
+            <button
+              className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
+              style={{ backgroundColor: data.backgroundColor.hex }}
+              onClick={(event) => {
+                event.preventDefault();
+                handleClick(data.korrekt, data._key);
+              }}
+              type="button"
+            >
+              {data.answer}
+            </button>
+          )}
+        </motion.div>
+      );
+    },
+    [clickedAnswer, correctAnswerKey, selectedAnswer, handleClick, addedPoints],
+  );
+
+  const memoizedAnswers = useMemo(
+    () => answerData.map(renderAnswer),
+    [answerData, renderAnswer],
+  );
 
   return (
     <div className="flex flex-col items-center w-full h-full p-6 mb-4">
@@ -162,39 +230,7 @@ export default function Questions() {
       />
 
       <form className="flex flex-wrap items-center justify-center w-full h-full lg:w-1/2">
-        {answerData.map(function (data) {
-          return (
-            <motion.div
-              whileHover={{
-                scale: 1,
-                transition: { duration: 1 },
-              }}
-              whileTap={{ scale: 0.5 }}
-              key={data._key}
-              className="flex w-full h-full mt-1.5 flex-nowrap"
-            >
-              {selectedAnswer === data._key ? (
-                data.korrekt ? (
-                  <CorrectAnswer />
-                ) : (
-                  <WrongAnswer />
-                )
-              ) : (
-                <button
-                  className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
-                  style={{ backgroundColor: data.backgroundColor.hex }}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    handleClick(data.korrekt, data._key);
-                  }}
-                  type="button"
-                >
-                  {data.answer}
-                </button>
-              )}
-            </motion.div>
-          );
-        })}
+        {memoizedAnswers}
       </form>
       <Countdown></Countdown>
     </div>

@@ -14,6 +14,8 @@ export const fetchPlayers = async () => {
     points: player.points,
     createdAt: player.created_at,
     hasBeenAdded: player.hasBeenAdded,
+    previousPoints: player.previousPoints,
+    addedPoints: player.addedPoints,
   }));
 };
 

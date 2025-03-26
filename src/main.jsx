@@ -35,6 +35,14 @@ const router = createBrowserRouter([
       </Suspense>
     ),
   },
+  {
+    path: '/podium',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <ScoreboardPage />
+      </Suspense>
+    ),
+  },
 ]);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
