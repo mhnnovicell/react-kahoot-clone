@@ -137,6 +137,9 @@ export default function Scoreboard() {
         player.currentQuestionId === currentId,
     );
 
+    console.log(activePlayers, 'activePlayers');
+    console.log(playersOnScoreboard, 'playersOnScoreboard');
+
     if (
       activePlayers.length > 0 &&
       activePlayers.length === playersOnScoreboard.length
@@ -169,18 +172,29 @@ export default function Scoreboard() {
       console.log(allPlayersPresent, 'allPlayersPresent');
       const nextId = currentId + 1;
       timeoutId = window.setTimeout(() => {
-        // Reset onScoreboard status for all players before navigating
-        const resetPlayers = async () => {
-          const { error } = await supabase
-            .from('players')
-            .update({ onScoreboard: false })
-            .eq('currentQuestionId', currentId);
+        // Use an immediately invoked async function to handle the async operations
+        (async () => {
+          try {
+            // Reset onScoreboard status for all players before navigating
+            const { error } = await supabase
+              .from('players')
+              .update({ onScoreboard: false })
+              .eq('currentQuestionId', currentId);
 
-          if (error) console.error('Error resetting player status:', error);
-          navigate(`/questions/${nextId}`);
-        };
+            if (error) {
+              console.error('Error resetting player status:', error);
+              // Still navigate even if there's an error
+            }
 
-        resetPlayers();
+            // Navigate after the database update completes
+            console.log(`Navigating to next question: ${nextId}`);
+            navigate(`/questions/${nextId}`);
+          } catch (err) {
+            console.error('Error during navigation:', err);
+            // Ensure we still navigate even if there's an exception
+            navigate(`/questions/${nextId}`);
+          }
+        })();
       }, 7000);
     }
 
