@@ -152,7 +152,7 @@ export default function Scoreboard() {
   const [allPlayersPresent, setAllPlayersPresent] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [isLastQuestion, setIsLastQuestion] = useState(false);
-  const [countdownSeconds, setCountdownSeconds] = useState(7);
+  const [countdownSeconds, setCountdownSeconds] = useState(20);
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
@@ -301,7 +301,7 @@ export default function Scoreboard() {
             }
           }
         })();
-      }, 7000);
+      }, 20000);
     }
 
     return () => {

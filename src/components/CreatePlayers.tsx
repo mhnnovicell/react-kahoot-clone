@@ -143,6 +143,7 @@ export default function CreatePlayers() {
     '#06b6d4',
     '#9333ea',
     '#9f1239',
+    '#45556c',
   ];
 
   return (
