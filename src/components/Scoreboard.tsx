@@ -3,6 +3,7 @@ import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { client } from '../services/sanityClient';
 
 const backgroundColors = [
   'bg-gradient-to-r from-cyan-500 to-blue-500',
@@ -94,9 +95,30 @@ export default function Scoreboard() {
   const [playersList, setPlayersList] = useState([]);
   const [allPlayersPresent, setAllPlayersPresent] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState(null);
+  const [isLastQuestion, setIsLastQuestion] = useState(false);
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkIfLastQuestion = async () => {
+      try {
+        const query = `*[_type == "questions"] {
+          _id
+        }`;
+        const questions = await client.fetch(query);
+
+        // If current question ID matches the last question's index
+        if (currentId === questions.length - 1) {
+          setIsLastQuestion(true);
+        }
+      } catch (error) {
+        console.error('Error checking if last question:', error);
+      }
+    };
+
+    checkIfLastQuestion();
+  }, [currentId]);
 
   // Get current player ID from sessionStorage (one-time storage that won't be removed)
   useEffect(() => {
@@ -203,12 +225,21 @@ export default function Scoreboard() {
             }
 
             // Navigate after the database update completes
-            console.log(`Navigating to next question: ${nextId}`);
-            navigate(`/questions/${nextId}`);
+            if (isLastQuestion) {
+              console.log('This was the last question, navigating to podium');
+              navigate('/podium');
+            } else {
+              console.log(`Navigating to next question: ${nextId}`);
+              navigate(`/questions/${nextId}`);
+            }
           } catch (err) {
             console.error('Error during navigation:', err);
             // Ensure we still navigate even if there's an exception
-            navigate(`/questions/${nextId}`);
+            if (isLastQuestion) {
+              navigate('/podium');
+            } else {
+              navigate(`/questions/${nextId}`);
+            }
           }
         })();
       }, 7000);
@@ -218,7 +249,13 @@ export default function Scoreboard() {
       supabase.removeChannel(subscription);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [checkAndFetchPlayers, currentId, navigate, allPlayersPresent]);
+  }, [
+    checkAndFetchPlayers,
+    currentId,
+    navigate,
+    allPlayersPresent,
+    isLastQuestion,
+  ]);
 
   return (
     <div className="w-full h-full d-flex">

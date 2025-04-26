@@ -8,6 +8,7 @@ import Loading from './components/Loading.tsx'; // Import the Loader component
 
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage'));
 const ScoreboardPage = lazy(() => import('./pages/ScoreboardPage'));
+const PodiumPage = lazy(() => import('./pages/PodiumPage'));
 
 const router = createBrowserRouter([
   {
@@ -39,7 +40,7 @@ const router = createBrowserRouter([
     path: '/podium',
     element: (
       <Suspense fallback={<Loading />}>
-        <ScoreboardPage />
+        <PodiumPage />
       </Suspense>
     ),
   },
