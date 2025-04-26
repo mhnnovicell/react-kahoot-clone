@@ -95,10 +95,6 @@ const Podium = () => {
         <img className="w-32 h-32 " src={logo1} alt="Quizazoid logo" />
       </div>
 
-      <h2 className="mb-8 text-5xl font-extrabold leading-none tracking-tight text-center text-white">
-        Podium
-      </h2>
-
       {/* Podium Section */}
       <motion.div
         className="flex items-end justify-center w-full mb-12 space-x-4 md:space-x-8"
@@ -106,6 +102,10 @@ const Podium = () => {
         initial="hidden"
         animate="visible"
       >
+        <h2 className="mb-8 text-5xl font-extrabold leading-none tracking-tight text-center text-white">
+          Podium
+        </h2>
+
         {topPlayers.map((player, index) => {
           const podiumPosition = getPodiumPosition(index);
           const podiumHeight = getPodiumHeight(podiumPosition);
