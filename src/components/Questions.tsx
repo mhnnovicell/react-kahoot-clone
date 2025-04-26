@@ -103,7 +103,9 @@ export default function Questions() {
 
       let earnedPoints = 0;
       if (isCorrect) {
-        earnedPoints = Math.max(1200 - timeTaken * 100, 0); // Example scoring logic
+        // Start with 1000 points and decrease linearly over 60 seconds
+        // 1000/60 = 16.67 points lost per second
+        earnedPoints = Math.max(1000 - timeTaken * (1000 / 60), 0);
         earnedPoints = Math.round(earnedPoints); // Round to the nearest whole number
       } else {
         earnedPoints = 0;
@@ -137,17 +139,22 @@ export default function Questions() {
           if (error) {
             throw error;
           }
-
-          console.log(
-            player.points + earnedPoints,
-            'player.points + earnedPoints ',
-          );
-
           return data;
         });
 
         const results = await Promise.all(updates);
         console.log('Points updated for all players:', results);
+
+        // Store the updated players in sessionStorage too
+        const updatedPlayers = players.map((player) => ({
+          ...player,
+          previousPoints: player.points,
+          points: player.points + earnedPoints,
+          addedPoints: earnedPoints,
+        }));
+        sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
+
+        // Then navigate after all updates are complete
         window.setTimeout(() => {
           navigate(`/scoreboard/${id}`);
         }, 3500);
@@ -155,7 +162,7 @@ export default function Questions() {
         console.error('Error updating points:', error);
       }
     },
-    [answerData, startTime, navigate, id],
+    [answerData, startTime, navigate, id, points],
   );
 
   const renderAnswer = useCallback(
@@ -180,7 +187,7 @@ export default function Questions() {
         >
           {selectedAnswer === data._key ? (
             data.korrekt ? (
-              <CorrectAnswer />
+              <CorrectAnswer points={addedPoints} />
             ) : (
               <WrongAnswer />
             )
