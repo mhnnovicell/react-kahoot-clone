@@ -1,6 +1,18 @@
 import { motion } from 'framer-motion';
 
 export default function WrongAnswer() {
+  // Create positions for X marks
+  const xMarks = Array.from({ length: 15 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100, // Random X position (%)
+    y: Math.random() * 100, // Random Y position (%)
+    size: Math.random() * 10 + 8, // Size between 8-18px
+    delay: Math.random() * 1.5, // Random delay
+    duration: 0.6 + Math.random() * 0.8, // Duration between 0.6-1.4s
+    opacity: Math.random() * 0.4 + 0.15, // Opacity between 0.15-0.55
+    rotation: Math.random() * 30 - 15, // Random slight rotation
+  }));
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -23,6 +35,98 @@ export default function WrongAnswer() {
           },
         }}
       >
+        {/* X marks animation effect */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {xMarks.map((mark) => (
+            <motion.div
+              key={mark.id}
+              className="absolute"
+              style={{
+                left: `${mark.x}%`,
+                top: `${mark.y}%`,
+                width: mark.size,
+                height: mark.size,
+                opacity: 0,
+                rotate: mark.rotation,
+              }}
+              animate={{
+                opacity: [0, mark.opacity, 0],
+                scale: [0.5, 1.2, 0.8],
+              }}
+              transition={{
+                duration: mark.duration,
+                delay: mark.delay,
+                repeat: Infinity,
+                repeatDelay: 1 + Math.random() * 2,
+              }}
+            >
+              {/* X mark */}
+              <div className="relative w-full h-full">
+                <div className="absolute w-full h-0.5 bg-white/80 top-1/2 -translate-y-1/2 rotate-45"></div>
+                <div className="absolute w-full h-0.5 bg-white/80 top-1/2 -translate-y-1/2 -rotate-45"></div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Error highlight flashes */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none bg-white/10"
+          animate={{
+            opacity: [0, 0.15, 0],
+          }}
+          transition={{
+            duration: 0.3,
+            repeat: 3,
+            repeatDelay: 0.2,
+            delay: 0.1,
+          }}
+        />
+
+        {/* Red zigzag warning patterns */}
+        {/* <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+          {[...Array(4)].map((_, i) => (
+            <motion.div
+              key={`zigzag-${i}`}
+              className="absolute left-0 right-0 h-px bg-white"
+              style={{ top: `${25 * i + 10}%` }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 + i * 0.1 }}
+            >
+              <svg
+                height="4"
+                width="100%"
+                className="absolute top-0 left-0"
+                style={{ transform: 'translateY(-50%)' }}
+              >
+                <pattern
+                  id={`zigzag-pattern-${i}`}
+                  x="0"
+                  y="0"
+                  width="20"
+                  height="4"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M0,2 L5,0 L10,2 L15,0 L20,2"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="1"
+                  />
+                </pattern>
+                <rect
+                  x="0"
+                  y="0"
+                  width="100%"
+                  height="4"
+                  fill={`url(#zigzag-pattern-${i})`}
+                />
+              </svg>
+            </motion.div>
+          ))}
+        </div> */}
+
         {/* Content */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -31,25 +135,27 @@ export default function WrongAnswer() {
           className="z-10 flex flex-col items-center justify-center gap-2"
         >
           <motion.div
-            className="relative w-8 h-8"
-            initial={{ rotate: -90 }}
-            animate={{ rotate: 0 }}
+            className="relative flex items-center justify-center w-10 h-10"
+            initial={{ rotate: -90, scale: 0.8 }}
+            animate={{ rotate: 0, scale: 1 }}
             transition={{ delay: 0.3, type: 'spring' }}
           >
-            <motion.span
-              className="absolute inset-0 flex items-center justify-center text-2xl"
+            {/* X mark icon */}
+            <motion.div
+              className="relative w-full h-full"
               animate={{
                 scale: [1, 1.2, 1],
-                transition: {
-                  repeat: 2,
-                  duration: 0.5,
-                  delay: 0.5,
-                  repeatType: 'reverse',
-                },
+              }}
+              transition={{
+                repeat: 2,
+                duration: 0.5,
+                delay: 0.5,
+                repeatType: 'reverse',
               }}
             >
-              😕
-            </motion.span>
+              <div className="absolute w-full h-1.5 bg-white rounded-full top-1/2 -translate-y-1/2 rotate-45"></div>
+              <div className="absolute w-full h-1.5 bg-white rounded-full top-1/2 -translate-y-1/2 -rotate-45"></div>
+            </motion.div>
           </motion.div>
 
           <motion.div
