@@ -286,19 +286,19 @@ export default function Scoreboard() {
             }
 
             // Navigate after the database update completes
-            // if (isLastQuestion) {
-            //   navigate('/podium');
-            // } else {
-            //   navigate(`/questions/${nextId}`);
-            // }
+            if (isLastQuestion) {
+              navigate('/podium');
+            } else {
+              navigate(`/questions/${nextId}`);
+            }
           } catch (err) {
             console.error('Error during navigation:', err);
             // Ensure we still navigate even if there's an exception
-            // if (isLastQuestion) {
-            //   navigate('/podium');
-            // } else {
-            //   navigate(`/questions/${nextId}`);
-            // }
+            if (isLastQuestion) {
+              navigate('/podium');
+            } else {
+              navigate(`/questions/${nextId}`);
+            }
           }
         })();
       }, 7000);
