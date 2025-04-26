@@ -126,7 +126,7 @@ const Podium = () => {
           return (
             <motion.div
               key={player.id}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center my-6"
               variants={itemVariants}
               style={{ order: podiumPosition + 1 }}
             >
