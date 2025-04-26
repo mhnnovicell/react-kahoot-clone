@@ -342,7 +342,7 @@ export default function Scoreboard() {
 
       {/* Main content */}
       <motion.div
-        className="w-full max-w-4xl mx-auto mb-20"
+        className="w-full max-w-4xl mx-auto mb-4"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
