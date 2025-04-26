@@ -83,50 +83,6 @@ export default function WrongAnswer() {
           }}
         />
 
-        {/* Red zigzag warning patterns */}
-        {/* <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
-          {[...Array(4)].map((_, i) => (
-            <motion.div
-              key={`zigzag-${i}`}
-              className="absolute left-0 right-0 h-px bg-white"
-              style={{ top: `${25 * i + 10}%` }}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.4, delay: 0.1 + i * 0.1 }}
-            >
-              <svg
-                height="4"
-                width="100%"
-                className="absolute top-0 left-0"
-                style={{ transform: 'translateY(-50%)' }}
-              >
-                <pattern
-                  id={`zigzag-pattern-${i}`}
-                  x="0"
-                  y="0"
-                  width="20"
-                  height="4"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <path
-                    d="M0,2 L5,0 L10,2 L15,0 L20,2"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="1"
-                  />
-                </pattern>
-                <rect
-                  x="0"
-                  y="0"
-                  width="100%"
-                  height="4"
-                  fill={`url(#zigzag-pattern-${i})`}
-                />
-              </svg>
-            </motion.div>
-          ))}
-        </div> */}
-
         {/* Content */}
         <motion.div
           initial={{ opacity: 0 }}
