@@ -54,19 +54,6 @@ const CountUp = ({ start, end }) => {
   );
 };
 
-const getRankColor = (index) => {
-  switch (index) {
-    case 0:
-      return 'bg-yellow-300'; // Gold for 1st
-    case 1:
-      return 'bg-gray-300'; // Silver for 2nd
-    case 2:
-      return 'bg-amber-600'; // Bronze for 3rd
-    default:
-      return 'bg-slate-700'; // Default
-  }
-};
-
 const getRankEmoji = (index) => {
   switch (index) {
     case 0:
@@ -83,25 +70,24 @@ const getRankEmoji = (index) => {
 const Player = ({ data, index }) => {
   // Calculate points earned in this round
   const pointsEarnedThisRound = data.points - (data.previousPoints || 0);
-  const rankColor = getRankColor(index);
   const rankEmoji = getRankEmoji(index);
 
   return (
     <motion.div
       layout
       variants={playerVariants}
-      className="flex items-center justify-center w-full p-3 rounded-lg shadow-lg backdrop-blur-sm bg-opacity-90"
+      className="mb-3 overflow-hidden rounded-lg shadow-lg backdrop-blur-lg"
     >
-      <div className="flex items-center w-full justify-evenly">
-        {/* Rank indicator */}
-        <span className="flex items-center w-10 h-10 text-lg font-bold text-white ">
+      <div className="flex flex-col items-center justify-center w-full gap-5 p-4">
+        {/* Left side: Rank and Player Info */}
+        <div className="flex items-center justify-center w-10 h-10 text-xl font-bold text-white rounded-full bg-gradient-to-br from-indigo-600 to-purple-600">
           {rankEmoji}
-        </span>
+        </div>
 
-        {/* Player avatar and name */}
         <span className="text-xl font-semibold text-white">{data.name}</span>
-        {/* Points display */}
-        <div className="px-5 py-2 text-xl font-extrabold text-white rounded-lg shadow-md bg-slate-800">
+
+        {/* Right side: Points */}
+        <div className="px-5 py-2 text-xl font-extrabold text-white rounded-lg shadow-md bg-slate-800/60">
           {pointsEarnedThisRound > 0 ? (
             <CountUp
               start={data.points - pointsEarnedThisRound}
@@ -111,19 +97,24 @@ const Player = ({ data, index }) => {
             data.points
           )}
         </div>
-        {pointsEarnedThisRound > 0 && (
+
+        {pointsEarnedThisRound > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="px-3 py-1 text-lg font-bold text-white bg-green-500 rounded-full"
+            whileHover={{ scale: 1.05 }}
           >
             +{pointsEarnedThisRound}
           </motion.div>
-        )}
-        {pointsEarnedThisRound === 0 && (
-          <span className="px-3 py-1 text-lg font-bold text-white bg-gray-600 rounded-full">
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="px-3 py-1 text-lg font-bold text-white rounded-full bg-gray-600/60"
+          >
             +0
-          </span>
+          </motion.div>
         )}
       </div>
     </motion.div>
@@ -131,16 +122,19 @@ const Player = ({ data, index }) => {
 };
 
 // Timer component for navigation countdown
-const NavigationTimer = ({ seconds }) => {
+const NavigationTimer = ({ seconds, isLastQuestion }) => {
   return (
     <motion.div
-      className="fixed flex items-center px-4 py-2 mt-6 text-white rounded-full shadow-lg bottom-4 right-4 bg-slate-800"
+      className="fixed flex items-center px-5 py-3 rounded-full shadow-xl bottom-2 right-4 bg-gradient-to-r from-indigo-900/90 to-purple-900/90 backdrop-blur-sm"
       initial={{ x: 100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
     >
-      <span className="mr-2">Næste spørgsmål:</span>
+      <span className="mr-3 text-lg font-semibold text-white">
+        {isLastQuestion ? 'Til resultater:' : 'Næste spørgsmål:'}
+      </span>
       <motion.div
-        className="flex items-center justify-center w-8 h-8 font-bold rounded-full bg-gradient-to-r from-purple-600 to-indigo-600"
+        className="flex items-center justify-center text-lg font-bold text-white rounded-full w-9 h-9 bg-gradient-to-r from-purple-600 to-indigo-600"
         initial={{ scale: 0.8 }}
         animate={{
           scale: [1, 1.2, 1],
@@ -292,19 +286,19 @@ export default function Scoreboard() {
             }
 
             // Navigate after the database update completes
-            if (isLastQuestion) {
-              navigate('/podium');
-            } else {
-              navigate(`/questions/${nextId}`);
-            }
+            // if (isLastQuestion) {
+            //   navigate('/podium');
+            // } else {
+            //   navigate(`/questions/${nextId}`);
+            // }
           } catch (err) {
             console.error('Error during navigation:', err);
-            // // Ensure we still navigate even if there's an exception
-            if (isLastQuestion) {
-              navigate('/podium');
-            } else {
-              navigate(`/questions/${nextId}`);
-            }
+            // Ensure we still navigate even if there's an exception
+            // if (isLastQuestion) {
+            //   navigate('/podium');
+            // } else {
+            //   navigate(`/questions/${nextId}`);
+            // }
           }
         })();
       }, 7000);
@@ -324,74 +318,101 @@ export default function Scoreboard() {
   ]);
 
   return (
-    <div className="w-full h-full min-h-screen py-8 bg-gradient-to-b from-purple-900 to-blue-900">
-      <div className="container px-4 mx-auto">
-        {/* Header with logo */}
-        <div className="flex items-center justify-center w-full">
-          <motion.div
-            className="flex items-center justify-center mb-4 md:mb-8"
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          >
-            <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
-              Quizazoid
-            </h1>
-            <motion.img
-              className="w-24 h-24 md:w-32 md:h-32"
-              src={logo1}
-              alt="Quizazoid logo"
-              animate={{ rotate: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
-            />
-          </motion.div>
-        </div>
-        {/* Main content */}
+    <div className="flex flex-col items-center w-full h-full min-h-screen px-4 py-6 md:px-8">
+      {/* Header */}
+      <div className="flex items-center justify-center w-full">
         <motion.div
-          className="max-w-4xl mx-auto"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          className="flex items-center justify-center mb-4 md:mb-8"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
-          {/* Scoreboard heading */}
-          <div className="p-6 mb-1 shadow-xl bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-xl">
-            <h2 className="text-4xl font-extrabold text-center text-white">
+          <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
+            Quizazoid
+          </h1>
+          <motion.img
+            className="w-24 h-24 md:w-32 md:h-32"
+            src={logo1}
+            alt="Quizazoid logo"
+            animate={{ rotate: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
+          />
+        </motion.div>
+      </div>
+
+      {/* Main content */}
+      <motion.div
+        className="w-full max-w-4xl mx-auto mb-20"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Scoreboard Card */}
+        <motion.div
+          className="w-full overflow-hidden shadow-2xl rounded-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Card Header */}
+          <div className="p-6 bg-gradient-to-r from-purple-600 to-indigo-600">
+            <h2 className="text-3xl font-extrabold text-center text-white md:text-4xl">
               Scoreboard
             </h2>
-            <p className="mt-2 text-center text-white opacity-80">
+            <p className="mt-2 text-center text-white/80">
               Spørgsmål {currentId + 1}{' '}
               {isLastQuestion ? '(Sidste spørgsmål)' : ''}
             </p>
           </div>
 
           {/* Players list */}
-          <motion.div
-            className="mb-10 shadow-xl bg-gradient-to-b from-indigo-900/90 to-purple-900/80 backdrop-blur-sm rounded-b-xl"
-            layout
-          >
+          <div className="p-6 bg-gradient-to-br from-indigo-900/80 to-purple-900/80 backdrop-blur-sm">
             <AnimatePresence>
               {playersList.length === 0 ? (
                 <motion.div
-                  className="flex items-center justify-center p-8"
+                  className="flex flex-col items-center justify-center p-8 space-y-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <p className="text-xl text-white">Loading players...</p>
+                  <div className="w-16 h-16 border-t-4 border-b-4 border-purple-500 rounded-full animate-spin"></div>
+                  <p className="text-xl font-medium text-white">
+                    Loading players...
+                  </p>
                 </motion.div>
               ) : (
-                playersList
-                  .filter((player) => player.hasBeenAdded)
-                  .map((player, index) => (
-                    <Player key={player.id} data={player} index={index} />
-                  ))
+                <motion.div
+                  className="space-y-1"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.1,
+                      },
+                    },
+                  }}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {playersList
+                    .filter((player) => player.hasBeenAdded)
+                    .map((player, index) => (
+                      <Player key={player.id} data={player} index={index} />
+                    ))}
+                </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Navigation timer */}
-      {allPlayersPresent && <NavigationTimer seconds={countdownSeconds} />}
+      {allPlayersPresent && (
+        <NavigationTimer
+          seconds={countdownSeconds}
+          isLastQuestion={isLastQuestion}
+        />
+      )}
     </div>
   );
 }
