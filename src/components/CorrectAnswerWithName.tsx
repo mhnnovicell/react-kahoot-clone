@@ -16,26 +16,6 @@ const CorrectAnswerWithName = ({ name }) => {
             '0 8px 0 rgba(16, 128, 60, 0.7), 0 10px 20px rgba(0, 0, 0, 0.3)',
         }}
       >
-        {/* Animated stripes in background */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute h-12 bg-white/10 -left-4 -right-4"
-              style={{ top: `${i * 30}%` }}
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                repeatType: 'loop',
-                ease: 'linear',
-                delay: i * 0.2,
-              }}
-            />
-          ))}
-        </div>
-
         {/* Content */}
         <motion.div
           initial={{ opacity: 0 }}
