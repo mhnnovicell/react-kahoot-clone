@@ -2,13 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
 
-// Move Supabase client creation to a separate file
-
-// Extract API calls into a separate service
 import {
   fetchPlayers,
   insertPlayer,
   deletePlayer,
+  getCurrentPlayer,
 } from '../services/playerService';
 
 import { supabase } from '../services/supabaseClient';
@@ -20,28 +18,55 @@ export default function CreatePlayers() {
   const [color, setColor] = useState('#000000');
   const [startGame, setStartGame] = useState(false);
   const [playerExists, setPlayerExists] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
+
+  const navigate = useNavigate();
+
+  // Check if current player exists
+  useEffect(() => {
+    const checkCurrentPlayer = async () => {
+      const player = await getCurrentPlayer();
+      if (player) {
+        setCurrentPlayer(player);
+        setPlayerExists(true);
+      }
+    };
+
+    checkCurrentPlayer();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await insertPlayer(value, color);
 
-    const players = JSON.parse(sessionStorage.getItem('players')) || [];
-    const playerExists = players.some((player) => player.name === value);
+    // First check if a player with this name already exists
+    const allPlayers = await fetchPlayers();
+    const nameExists = allPlayers.some((player) => player.name === value);
 
-    if (playerExists) {
-      setPlayerExists(true);
+    if (nameExists) {
+      alert('A player with this name already exists.');
       return;
     }
 
-    setPlayerExists(true);
+    const newPlayer = await insertPlayer(value, color);
+    if (newPlayer) {
+      setCurrentPlayer(newPlayer);
+      setPlayerExists(true);
+      setValue('');
+    }
   };
 
-  const removePlayer = useCallback(async (name) => {
-    console.log(name, 'name');
-    await deletePlayer(name.name);
-    setPlayerExists(false);
-    setValue('');
-  }, []);
+  const removePlayer = useCallback(
+    async (name) => {
+      console.log(name, 'name');
+      const success = await deletePlayer(name.name);
+      if (success && currentPlayer && currentPlayer.name === name.name) {
+        setCurrentPlayer(null);
+        setPlayerExists(false);
+      }
+      setValue('');
+    },
+    [currentPlayer],
+  );
 
   const spring = {
     type: 'spring',
@@ -62,52 +87,7 @@ export default function CreatePlayers() {
       )
       .subscribe();
 
-    const buttonDisabledState = supabase
-      .channel('players')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'players' },
-        (payload) => {
-          const playerId = payload.new.id;
-          const storedPlayers =
-            JSON.parse(sessionStorage.getItem('players')) || [];
-          const playerExists = storedPlayers.some(
-            (player) => player.id === playerId,
-          );
-
-          if (playerExists) {
-            setPlayerExists(true);
-          }
-        },
-      )
-      .subscribe();
-
-    // Check if player exists on initial load
-    const checkPlayerExistsOnLoad = async () => {
-      const storedPlayers = JSON.parse(sessionStorage.getItem('players')) || [];
-      if (storedPlayers.length > 0) {
-        const { data, error } = await supabase
-          .from('players')
-          .select('id')
-          .in(
-            'id',
-            storedPlayers.map((player) => player.id),
-          );
-
-        if (error) {
-          console.error(error);
-          return;
-        }
-
-        if (data.length > 0) {
-          setPlayerExists(true);
-        }
-      }
-    };
-
-    checkPlayerExistsOnLoad();
-
-    let isMounted = true; // Add this line
+    let isMounted = true;
 
     const fetchAndSetPlayers = async () => {
       const players = await fetchPlayers();
@@ -122,25 +102,36 @@ export default function CreatePlayers() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'players' },
-        async (payload) => {
-          if (isMounted) fetchAndSetPlayers();
+        async () => {
+          if (isMounted) {
+            fetchAndSetPlayers();
+
+            // Re-check current player status
+            const currentPlayer = await getCurrentPlayer();
+            if (currentPlayer) {
+              setCurrentPlayer(currentPlayer);
+              setPlayerExists(true);
+            } else {
+              setCurrentPlayer(null);
+              setPlayerExists(false);
+            }
+          }
         },
       )
       .subscribe();
 
     return () => {
-      isMounted = false; // Add this line
+      isMounted = false;
       supabase.removeChannel(fetchPlayersFromSupabase);
       supabase.removeChannel(isGameReady);
-      supabase.removeChannel(buttonDisabledState);
     };
   }, []);
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    startGame ? navigate('/questions/0') : null;
-  }, [startGame]);
+    if (startGame) {
+      navigate('/questions/0');
+    }
+  }, [startGame, navigate]);
 
   return (
     <div className="flex items-center justify-center p-4 mt-5 rounded-xl sm:mt-10 md:p-10">

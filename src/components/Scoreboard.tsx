@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -93,27 +93,42 @@ export default function Scoreboard() {
   );
   const [playersList, setPlayersList] = useState([]);
   const [allPlayersPresent, setAllPlayersPresent] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
 
-  // Update current player's status to show they're on the scoreboard
+  // Get current player ID from localStorage (one-time storage that won't be removed)
   useEffect(() => {
-    const updatePlayerStatus = async () => {
-      // Get current player info from sessionStorage
-      const players = JSON.parse(sessionStorage.getItem('players')) || [];
-      if (players.length > 0) {
-        // Update the current player's status in Supabase
-        const { error } = await supabase
+    const currentPlayerId = localStorage.getItem('currentPlayerId');
+    if (currentPlayerId) {
+      // Fetch the current player data
+      const fetchCurrentPlayer = async () => {
+        const { data, error } = await supabase
+          .from('players')
+          .select('*')
+          .eq('id', currentPlayerId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching current player:', error);
+          return;
+        }
+
+        setCurrentPlayer(data);
+
+        // Update the player's status to show they're on the scoreboard
+        const { error: updateError } = await supabase
           .from('players')
           .update({ onScoreboard: true, currentQuestionId: currentId })
-          .eq('id', players[0].id); // Assuming the first player is the current user
+          .eq('id', data.id);
 
-        if (error) console.error('Error updating player status:', error);
-      }
-    };
+        if (updateError)
+          console.error('Error updating player status:', updateError);
+      };
 
-    updatePlayerStatus();
+      fetchCurrentPlayer();
+    }
   }, [currentId]);
 
   const checkAndFetchPlayers = useCallback(async () => {
@@ -122,10 +137,11 @@ export default function Scoreboard() {
       .select('*')
       .order('points', { ascending: false });
 
-    if (error) console.error('Error fetching scoreboard:', error);
+    if (error) {
+      console.error('Error fetching scoreboard:', error);
+      return;
+    }
 
-    // Store players data
-    sessionStorage.setItem('players', JSON.stringify(data));
     setPlayersList(data);
 
     // Check if all active players are on this scoreboard

@@ -32,24 +32,15 @@ export const insertPlayer = async (name, color) => {
       hasBeenAdded: true,
     })
     .select();
+
   if (error) {
     console.error(error);
+    return null;
   } else {
     console.log(data, 'data');
-    // Store the current player ID in sessionStorage
-    sessionStorage.setItem('currentPlayerId', data[0].id);
-
-    // Add player to sessionStorage
-    const players = JSON.parse(sessionStorage.getItem('players')) || [];
-    players.push({
-      name,
-      class: color,
-      isReady: true,
-      points: 0,
-      id: data[0].id,
-      createdAt: data[0].created_at,
-    });
-    sessionStorage.setItem('players', JSON.stringify(players));
+    // Store the current player ID in localStorage (persists better than sessionStorage)
+    localStorage.setItem('currentPlayerId', data[0].id);
+    return data[0];
   }
 };
 
@@ -58,12 +49,84 @@ export const deletePlayer = async (name) => {
     .from('players')
     .delete()
     .eq('name', name);
+
   if (error) {
     console.error(error);
-  } else {
-    // Remove player from sessionStorage
-    const players = JSON.parse(sessionStorage.getItem('players')) || [];
-    const updatedPlayers = players.filter((player) => player.name !== name);
-    sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
+    return false;
   }
+
+  // Check if we're deleting the current player
+  const currentPlayerId = localStorage.getItem('currentPlayerId');
+  if (currentPlayerId) {
+    const { data: playerData } = await supabase
+      .from('players')
+      .select('name')
+      .eq('id', currentPlayerId)
+      .single();
+
+    if (playerData && playerData.name === name) {
+      localStorage.removeItem('currentPlayerId');
+    }
+  }
+
+  return true;
+};
+
+export const getCurrentPlayer = async () => {
+  const currentPlayerId = localStorage.getItem('currentPlayerId');
+  if (!currentPlayerId) return null;
+
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .eq('id', currentPlayerId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching current player:', error);
+    return null;
+  }
+
+  return data;
+};
+
+export const updatePlayerScore = async (playerId, points, previousPoints) => {
+  const { data, error } = await supabase
+    .from('players')
+    .update({
+      points: points,
+      previousPoints: previousPoints,
+      addedPoints: points - previousPoints,
+    })
+    .eq('id', playerId)
+    .select();
+
+  if (error) {
+    console.error('Error updating player score:', error);
+    return null;
+  }
+
+  return data[0];
+};
+
+export const updatePlayerScoreboardStatus = async (
+  playerId,
+  onScoreboard,
+  currentQuestionId,
+) => {
+  const { data, error } = await supabase
+    .from('players')
+    .update({
+      onScoreboard: onScoreboard,
+      currentQuestionId: currentQuestionId,
+    })
+    .eq('id', playerId)
+    .select();
+
+  if (error) {
+    console.error('Error updating player scoreboard status:', error);
+    return null;
+  }
+
+  return data[0];
 };
