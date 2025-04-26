@@ -370,7 +370,7 @@ export default function Questions() {
       >
         {/* Question number */}
         <div className="p-2 font-bold text-center text-white bg-gradient-to-r from-purple-600 to-indigo-600">
-          Question {Number(id) + 1}
+          Spørgsmål {Number(id) + 1}
         </div>
 
         {/* Question content */}
