@@ -357,7 +357,7 @@ export default function Scoreboard() {
           {/* Card Header */}
           <div className="p-6 bg-gradient-to-r from-purple-600 to-indigo-600">
             <h2 className="text-3xl font-extrabold text-center text-white md:text-4xl">
-              Scoreboard
+              Stilling
             </h2>
             <p className="mt-2 text-center text-white/80">
               Spørgsmål {currentId + 1}{' '}
