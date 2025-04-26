@@ -5,21 +5,25 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { client } from '../services/sanityClient';
 
-const backgroundColors = [
-  'bg-gradient-to-r from-cyan-500 to-blue-500',
-  'bg-gradient-to-r from-sky-500 to-indigo-500',
-  'bg-gradient-to-r from-violet-500 to-fuchsia-500',
-  'bg-gradient-to-r from-purple-500 to-pink-500',
-  'bg-gradient-to-r from-teal-500 to-indigo-500',
-  'bg-gradient-to-r from-indigo-500 to-sky-500',
-  'bg-gradient-to-r from-rose-500 to-fuchsia-500',
-  'bg-gradient-to-r from-lime-500 to-emerald-500',
-  'bg-gradient-to-r from-red-500 to-orange-500',
-];
+// Updated animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.5,
+    },
+  },
+};
 
-const getRandomBackgroundColor = () => {
-  const randomIndex = Math.floor(Math.random() * backgroundColors.length);
-  return backgroundColors[randomIndex];
+const playerVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 300, damping: 24 },
+  },
 };
 
 const CountUp = ({ start, end }) => {
@@ -35,7 +39,7 @@ const CountUp = ({ start, end }) => {
 
     controls.start({
       value: end,
-      transition: { duration: 2, ease: 'easeInOut', delay: 1 },
+      transition: { duration: 2, ease: 'easeInOut', delay: 0.5 },
     });
   }, [end, controls, start]);
 
@@ -50,22 +54,54 @@ const CountUp = ({ start, end }) => {
   );
 };
 
-const Player = ({ data }) => {
+const getRankColor = (index) => {
+  switch (index) {
+    case 0:
+      return 'bg-yellow-300'; // Gold for 1st
+    case 1:
+      return 'bg-gray-300'; // Silver for 2nd
+    case 2:
+      return 'bg-amber-600'; // Bronze for 3rd
+    default:
+      return 'bg-slate-700'; // Default
+  }
+};
+
+const getRankEmoji = (index) => {
+  switch (index) {
+    case 0:
+      return '🥇';
+    case 1:
+      return '🥈';
+    case 2:
+      return '🥉';
+    default:
+      return `${index + 1}`;
+  }
+};
+
+const Player = ({ data, index }) => {
   // Calculate points earned in this round
   const pointsEarnedThisRound = data.points - (data.previousPoints || 0);
+  const rankColor = getRankColor(index);
+  const rankEmoji = getRankEmoji(index);
 
   return (
     <motion.div
       layout
-      className="rounded-full w-3/5 my-1 flex justify-between items-center max-w-lg min-w-fit px-5 py-2.5 text-sm font-medium text-center text-white"
-      key={data.id}
-      style={{ backgroundColor: data.class }}
+      variants={playerVariants}
+      className="flex items-center justify-center w-full p-3 rounded-lg shadow-lg backdrop-blur-sm bg-opacity-90"
     >
-      {data.name}
-      <div className="flex items-center gap-2">
-        <span
-          className={`bg-slate-700 w-auto text-white inline-flex justify-center self-center items-center text-center text-sm font-extrabold px-3 rounded-full ml-2`}
-        >
+      <div className="flex items-center w-full justify-evenly">
+        {/* Rank indicator */}
+        <span className="flex items-center w-10 h-10 text-lg font-bold text-white ">
+          {rankEmoji}
+        </span>
+
+        {/* Player avatar and name */}
+        <span className="text-xl font-semibold text-white">{data.name}</span>
+        {/* Points display */}
+        <div className="px-5 py-2 text-xl font-extrabold text-white rounded-lg shadow-md bg-slate-800">
           {pointsEarnedThisRound > 0 ? (
             <CountUp
               start={data.points - pointsEarnedThisRound}
@@ -74,28 +110,55 @@ const Player = ({ data }) => {
           ) : (
             data.points
           )}
-        </span>
+        </div>
         {pointsEarnedThisRound > 0 && (
-          <span className="text-xs font-bold text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-3 py-1 text-lg font-bold text-white bg-green-500 rounded-full"
+          >
             +{pointsEarnedThisRound}
-          </span>
+          </motion.div>
         )}
         {pointsEarnedThisRound === 0 && (
-          <span className="text-xs font-bold text-black">+0</span>
+          <span className="px-3 py-1 text-lg font-bold text-white bg-gray-600 rounded-full">
+            +0
+          </span>
         )}
       </div>
     </motion.div>
   );
 };
 
-export default function Scoreboard() {
-  const [backgroundColor, setBackgroundColor] = useState(
-    getRandomBackgroundColor,
+// Timer component for navigation countdown
+const NavigationTimer = ({ seconds }) => {
+  return (
+    <motion.div
+      className="fixed bottom-0 flex items-center px-4 py-2 mt-6 text-white rounded-full shadow-lg right-4 bg-slate-800"
+      initial={{ x: 100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+    >
+      <span className="mr-2">Næste spørgsmål:</span>
+      <motion.div
+        className="flex items-center justify-center w-8 h-8 font-bold rounded-full bg-gradient-to-r from-purple-600 to-indigo-600"
+        initial={{ scale: 0.8 }}
+        animate={{
+          scale: [1, 1.2, 1],
+          transition: { repeat: Infinity, duration: 1 },
+        }}
+      >
+        {seconds}
+      </motion.div>
+    </motion.div>
   );
+};
+
+export default function Scoreboard() {
   const [playersList, setPlayersList] = useState([]);
   const [allPlayersPresent, setAllPlayersPresent] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [isLastQuestion, setIsLastQuestion] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(7);
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
@@ -120,7 +183,7 @@ export default function Scoreboard() {
     checkIfLastQuestion();
   }, [currentId]);
 
-  // Get current player ID from sessionStorage (one-time storage that won't be removed)
+  // Get current player ID from sessionStorage
   useEffect(() => {
     const currentPlayerId = sessionStorage.getItem('currentPlayerId');
     if (currentPlayerId) {
@@ -175,9 +238,6 @@ export default function Scoreboard() {
         player.currentQuestionId === currentId,
     );
 
-    console.log(activePlayers, 'activePlayers');
-    console.log(playersOnScoreboard, 'playersOnScoreboard');
-
     if (
       activePlayers.length > 0 &&
       activePlayers.length === playersOnScoreboard.length
@@ -198,18 +258,26 @@ export default function Scoreboard() {
           schema: 'public',
           table: 'players',
         },
-        (payload) => {
+        () => {
           checkAndFetchPlayers();
         },
       )
       .subscribe();
 
-    // Only set up the timer for navigation when all players are present
-    let timeoutId;
+    // Countdown for navigation when all players are present
+    let countdownInterval;
+    let navigationTimeout;
+
     if (allPlayersPresent) {
-      console.log(allPlayersPresent, 'allPlayersPresent');
       const nextId = currentId + 1;
-      timeoutId = window.setTimeout(() => {
+
+      // Setup countdown
+      countdownInterval = setInterval(() => {
+        setCountdownSeconds((prev) => Math.max(0, prev - 1));
+      }, 1000);
+
+      // Setup navigation timer
+      navigationTimeout = window.setTimeout(() => {
         // Use an immediately invoked async function to handle the async operations
         (async () => {
           try {
@@ -221,20 +289,17 @@ export default function Scoreboard() {
 
             if (error) {
               console.error('Error resetting player status:', error);
-              // Still navigate even if there's an error
             }
 
             // Navigate after the database update completes
             if (isLastQuestion) {
-              console.log('This was the last question, navigating to podium');
               navigate('/podium');
             } else {
-              console.log(`Navigating to next question: ${nextId}`);
               navigate(`/questions/${nextId}`);
             }
           } catch (err) {
             console.error('Error during navigation:', err);
-            // Ensure we still navigate even if there's an exception
+            // // Ensure we still navigate even if there's an exception
             if (isLastQuestion) {
               navigate('/podium');
             } else {
@@ -247,7 +312,8 @@ export default function Scoreboard() {
 
     return () => {
       supabase.removeChannel(subscription);
-      if (timeoutId) clearTimeout(timeoutId);
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (navigationTimeout) clearTimeout(navigationTimeout);
     };
   }, [
     checkAndFetchPlayers,
@@ -258,28 +324,62 @@ export default function Scoreboard() {
   ]);
 
   return (
-    <div className="w-full h-full d-flex">
-      <div className="flex items-center justify-center w-full h-full p-4">
-        <h1 className="text-4xl font-extrabold leading-none tracking-tight text-center text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-          Quizazoid
-        </h1>
-        <img className="w-32 h-32 " src={logo1} alt="image description" />
+    <div className="w-full h-full min-h-screen py-8 bg-gradient-to-b from-purple-900 to-blue-900">
+      <div className="container px-4 mx-auto">
+        {/* Header with logo */}
+        <div className="flex items-center justify-center mb-12">
+          <h1 className="text-4xl font-extrabold leading-none tracking-tight text-center text-white md:text-5xl lg:text-6xl">
+            Quizazoid
+          </h1>
+          <img className="w-32 h-32" src={logo1} alt="Quizazoid logo" />
+        </div>
+
+        {/* Main content */}
+        <motion.div
+          className="max-w-4xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Scoreboard heading */}
+          <div className="p-6 mb-1 shadow-xl bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-xl">
+            <h2 className="text-4xl font-extrabold text-center text-white">
+              Scoreboard
+            </h2>
+            <p className="mt-2 text-center text-white opacity-80">
+              Spørgsmål {currentId + 1}{' '}
+              {isLastQuestion ? '(Sidste spørgsmål)' : ''}
+            </p>
+          </div>
+
+          {/* Players list */}
+          <motion.div
+            className="mb-10 shadow-xl bg-gradient-to-b from-indigo-900/90 to-purple-900/80 backdrop-blur-sm rounded-b-xl"
+            layout
+          >
+            <AnimatePresence>
+              {playersList.length === 0 ? (
+                <motion.div
+                  className="flex items-center justify-center p-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <p className="text-xl text-white">Loading players...</p>
+                </motion.div>
+              ) : (
+                playersList
+                  .filter((player) => player.hasBeenAdded)
+                  .map((player, index) => (
+                    <Player key={player.id} data={player} index={index} />
+                  ))
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
       </div>
 
-      <div className="flex flex-col items-center self-center justify-center w-full h-full p-6">
-        <div
-          className={`${backgroundColor} w-full p-6 flex flex-col rounded-lg shadow`}
-        >
-          <h2 className="mb-4 text-5xl font-extrabold leading-none tracking-tight text-left text-gray-900 md:text-5xl lg:text-5xl dark:text-white">
-            Scoreboard
-          </h2>
-          <AnimatePresence>
-            {playersList.map((data) => (
-              <Player key={data.id} data={data} />
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
+      {/* Navigation timer */}
+      {allPlayersPresent && <NavigationTimer seconds={countdownSeconds} />}
     </div>
   );
 }
