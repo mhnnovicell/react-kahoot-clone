@@ -87,17 +87,28 @@ const Podium = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-between w-full h-full p-6">
-      <div className="flex items-center justify-center w-full p-4">
-        <h1 className="text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
+    <div className="flex flex-col items-center justify-center w-full h-full p-6">
+      {/* <motion.div
+        className="flex items-center justify-center mb-4 md:mb-8"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      >
+        <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
           Quizazoid
         </h1>
-        <img className="w-32 h-32 " src={logo1} alt="Quizazoid logo" />
-      </div>
+        <motion.img
+          className="w-24 h-24 md:w-32 md:h-32"
+          src={logo1}
+          alt="Quizazoid logo"
+          animate={{ rotate: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
+        />
+      </motion.div> */}
 
       {/* Podium Section */}
       <motion.div
-        className="flex items-end justify-center w-full mb-12 space-x-4 md:space-x-8"
+        className="flex flex-col justify-center w-full mt-10 mb-12"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
