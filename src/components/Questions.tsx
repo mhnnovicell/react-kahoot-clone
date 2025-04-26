@@ -125,12 +125,12 @@ export default function Questions() {
 
   useEffect(() => {
     const resetScoreboardStatus = async () => {
-      const players = JSON.parse(sessionStorage.getItem('players')) || [];
-      if (players.length > 0) {
+      const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+      if (currentPlayerId) {
         const { error } = await supabase
           .from('players')
           .update({ onScoreboard: false, currentQuestionId: id })
-          .eq('id', players[0].id); // Update current player
+          .eq('id', currentPlayerId);
 
         if (error) console.error('Error resetting scoreboard status:', error);
       }
@@ -154,15 +154,20 @@ export default function Questions() {
   }, []);
 
   const handleTimeExpired = useCallback(async () => {
-    // Get current player info from sessionStorage
     let players = JSON.parse(sessionStorage.getItem('players')) || [];
     if (players.length === 0) {
       console.error('No players found');
       return;
     }
 
-    // Get the current player (first player in the session)
-    const currentPlayer = players[0];
+    // Get the current player ID from sessionStorage
+    const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+
+    // Find the current player based on ID
+    const currentPlayer = players.find(
+      (player) => player.id === currentPlayerId,
+    );
+
     if (!currentPlayer) {
       console.error('Current player not found');
       return;
@@ -219,8 +224,14 @@ export default function Questions() {
         return;
       }
 
-      // Get the current player (assuming the first player in the array is the current user)
-      const currentPlayer = players[0];
+      // Get the current player ID from sessionStorage
+      const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+
+      // Find the current player based on ID
+      const currentPlayer = players.find(
+        (player) => player.id === currentPlayerId,
+      );
+
       if (!currentPlayer) {
         console.error('Current player not found');
         return;

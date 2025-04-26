@@ -36,6 +36,9 @@ export const insertPlayer = async (name, color) => {
     console.error(error);
   } else {
     console.log(data, 'data');
+    // Store the current player ID in sessionStorage
+    sessionStorage.setItem('currentPlayerId', data[0].id);
+
     // Add player to sessionStorage
     const players = JSON.parse(sessionStorage.getItem('players')) || [];
     players.push({
