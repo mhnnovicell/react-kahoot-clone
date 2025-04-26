@@ -231,68 +231,62 @@ export default function CreatePlayers() {
           )}
 
           {/* Player List Section */}
-          {playerExists && (
-            <div className="mb-6">
-              <h3 className="mb-3 text-xl font-semibold text-white">
-                Spillere:
-              </h3>
+          <div className="mb-6">
+            <h3 className="mb-3 text-xl font-semibold text-white">Spillere:</h3>
 
-              <div className="min-h-[100px] bg-indigo-950/50 rounded-lg p-4">
-                {displayValues.length === 0 ? (
-                  <p className="italic text-purple-200">
-                    Ingen spillere fundet
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    <AnimatePresence>
-                      {displayValues.map((value, index) => (
-                        <motion.div
-                          key={index}
-                          id={value.name}
-                          className="flex items-center px-3 py-2 rounded-lg shadow-md "
-                          style={{ backgroundColor: value.class }}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          layout
+            <div className="min-h-[100px] bg-white/10 rounded-lg p-4">
+              {displayValues.length === 0 ? (
+                <p className="italic text-purple-200">Ingen spillere fundet</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <AnimatePresence>
+                    {displayValues.map((value, index) => (
+                      <motion.div
+                        key={index}
+                        id={value.name}
+                        className="flex items-center px-3 py-2 rounded-lg shadow-md "
+                        style={{ backgroundColor: value.class }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        layout
+                      >
+                        <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold rounded-full bg-white/20">
+                          {value.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-medium text-white">
+                          {value.name}
+                        </span>
+                        <motion.button
+                          type="button"
+                          className="ml-2 text-white/80 hover:text-white"
+                          aria-label="Remove"
+                          onClick={() => removePlayer(value)}
+                          whileHover={{ scale: 1.2 }}
+                          whileTap={{ scale: 0.9 }}
                         >
-                          <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold rounded-full bg-white/20">
-                            {value.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="font-medium text-white">
-                            {value.name}
-                          </span>
-                          <motion.button
-                            type="button"
-                            className="ml-2 text-white/80 hover:text-white"
-                            aria-label="Remove"
-                            onClick={() => removePlayer(value)}
-                            whileHover={{ scale: 1.2 }}
-                            whileTap={{ scale: 0.9 }}
+                          <svg
+                            className="w-4 h-4"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 14 14"
                           >
-                            <svg
-                              className="w-4 h-4"
-                              aria-hidden="true"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 14 14"
-                            >
-                              <path
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeWidth="2"
-                                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                              />
-                            </svg>
-                          </motion.button>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeWidth="2"
+                              d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                            />
+                          </svg>
+                        </motion.button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Form Section - only shown if player doesn't exist */}
           {!playerExists && (
