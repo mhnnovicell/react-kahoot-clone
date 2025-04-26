@@ -98,9 +98,9 @@ export default function Scoreboard() {
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
 
-  // Get current player ID from localStorage (one-time storage that won't be removed)
+  // Get current player ID from sessionStorage (one-time storage that won't be removed)
   useEffect(() => {
-    const currentPlayerId = localStorage.getItem('currentPlayerId');
+    const currentPlayerId = sessionStorage.getItem('currentPlayerId');
     if (currentPlayerId) {
       // Fetch the current player data
       const fetchCurrentPlayer = async () => {

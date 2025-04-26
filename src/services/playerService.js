@@ -38,14 +38,14 @@ export const insertPlayer = async (name, color) => {
     return null;
   } else {
     console.log(data, 'data');
-    // Store the current player ID in localStorage (persists better than sessionStorage)
-    localStorage.setItem('currentPlayerId', data[0].id);
+    // Store the current player ID in sessionStorage (persists better than sessionStorage)
+    sessionStorage.setItem('currentPlayerId', data[0].id);
     return data[0];
   }
 };
 
 export const deletePlayer = async (name) => {
-  const currentPlayerId = localStorage.getItem('currentPlayerId');
+  const currentPlayerId = sessionStorage.getItem('currentPlayerId');
 
   // First, check if the player we're deleting is the current player
   // We need to do this BEFORE deleting the player from the database
@@ -71,16 +71,16 @@ export const deletePlayer = async (name) => {
     return false;
   }
 
-  // If we determined this was the current player, remove the ID from localStorage
+  // If we determined this was the current player, remove the ID from sessionStorage
   if (isCurrentPlayer) {
-    localStorage.removeItem('currentPlayerId');
+    sessionStorage.removeItem('currentPlayerId');
   }
 
   return true;
 };
 
 export const getCurrentPlayer = async () => {
-  const currentPlayerId = localStorage.getItem('currentPlayerId');
+  const currentPlayerId = sessionStorage.getItem('currentPlayerId');
   if (!currentPlayerId) return null;
 
   const { data, error } = await supabase
