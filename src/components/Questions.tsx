@@ -7,7 +7,7 @@ import {
   useReducer,
 } from 'react';
 import { client } from '../services/sanityClient';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
@@ -259,19 +259,17 @@ export default function Questions() {
   const renderAnswer = useCallback(
     (data) => (
       <motion.div
-        whileHover={{
-          scale: 1,
-          transition: { duration: 1 },
-        }}
-        whileTap={{ scale: 0.5 }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
         key={data._key}
-        className={`flex w-full h-full mt-1.5 flex-nowrap ${
+        className={`w-full md:w-[calc(50%-0.75rem)] mb-3 ${
           clickedAnswer &&
           clickedAnswer !== data._key &&
           correctAnswerKey !== data._key
-            ? 'opacity-20'
+            ? 'opacity-30'
             : ''
         }`}
+        layout
       >
         {selectedAnswer === data._key ? (
           data.korrekt ? (
@@ -283,8 +281,11 @@ export default function Questions() {
           <CorrectAnswerWithName name={data.answer} />
         ) : (
           <button
-            className="w-full h-full p-4 text-lg font-extrabold leading-none tracking-tight text-center text-white rounded-lg shadow lg:text-3xl lg:p-20 lg:m-4 whitespace-nowrap"
-            style={{ backgroundColor: data.backgroundColor.hex }}
+            className="w-full h-full p-6 text-xl font-extrabold leading-none tracking-tight text-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 min-h-[80px] md:min-h-[100px] lg:text-2xl"
+            style={{
+              backgroundColor: data.backgroundColor.hex,
+              boxShadow: `0 8px 0 ${adjustColor(data.backgroundColor.hex, -30)}, 0 10px 20px rgba(0, 0, 0, 0.3)`,
+            }}
             onClick={(event) => {
               event.preventDefault();
               handleClick(data.korrekt, data._key);
@@ -299,6 +300,23 @@ export default function Questions() {
     [clickedAnswer, correctAnswerKey, selectedAnswer, handleClick, addedPoints],
   );
 
+  // Helper function to darken a color for button shadows
+  function adjustColor(hex, amount) {
+    return (
+      '#' +
+      hex
+        .replace(/^#/, '')
+        .replace(/../g, (color) =>
+          (
+            '0' +
+            Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(
+              16,
+            )
+          ).substr(-2),
+        )
+    );
+  }
+
   const memoizedAnswers = useMemo(
     () => answerData.map(renderAnswer),
     [answerData, renderAnswer],
@@ -308,36 +326,115 @@ export default function Questions() {
   if (!currentPlayer) {
     return (
       <div className="flex items-center justify-center w-full h-screen">
-        <p className="text-2xl text-white">Loading quiz...</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center p-8 bg-white rounded-lg bg-opacity-10 backdrop-blur-sm"
+        >
+          <div className="w-16 h-16 border-t-4 border-b-4 border-purple-500 rounded-full animate-spin"></div>
+          <p className="mt-4 text-2xl font-bold text-white">Loading quiz...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center w-full h-full p-6 mb-4">
-      <div className="flex items-center justify-center w-full h-full p-4">
-        <h1 className="text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
-          Quizazoid
-        </h1>
-        <img className="w-32 h-32" src={logo1} alt="Quizazoid logo" />
+    <div className="flex flex-col items-center w-full h-full min-h-screen px-4 py-6 md:px-8">
+      {/* Header */}
+      <div className="flex items-center justify-center w-full">
+        <motion.div
+          className="flex items-center justify-center mb-4 md:mb-8"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        >
+          <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
+            Quizazoid
+          </h1>
+          <motion.img
+            className="w-24 h-24 md:w-32 md:h-32"
+            src={logo1}
+            alt="Quizazoid logo"
+            animate={{ rotate: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
+          />
+        </motion.div>
       </div>
 
-      <h2 className="my-6 text-4xl font-extrabold leading-none tracking-tight text-center text-white md:my-10 md:text-5xl">
-        {question}
-      </h2>
-      {questionImage && (
-        <img
-          className="w-full h-auto max-w-full my-4 rounded-lg"
-          src={questionImage}
-          alt={question}
-          loading="eager"
-        />
-      )}
+      {/* Question Card */}
+      <motion.div
+        className="w-full max-w-4xl mx-auto mb-6 overflow-hidden shadow-xl bg-gradient-to-b from-indigo-900/90 to-purple-900/80 rounded-xl backdrop-blur-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Question number */}
+        <div className="p-2 font-bold text-center text-white bg-gradient-to-r from-purple-600 to-indigo-600">
+          Question {Number(id) + 1}
+        </div>
 
-      <form className="flex flex-wrap items-center justify-center w-full h-full lg:w-1/2">
-        {memoizedAnswers}
-      </form>
-      <Countdown onTimeExpired={handleTimeExpired} />
+        {/* Question content */}
+        <div className="p-6">
+          <h2 className="my-4 text-3xl font-extrabold leading-tight text-center text-white sm:text-4xl md:my-6">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={question}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {question}
+              </motion.span>
+            </AnimatePresence>
+          </h2>
+
+          {questionImage && (
+            <motion.div
+              className="relative w-full my-6 overflow-hidden rounded-lg"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <img
+                className="w-full h-auto rounded-lg shadow-lg object-cover max-h-[400px]"
+                src={questionImage}
+                alt={question}
+                loading="eager"
+              />
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Answers Grid */}
+      <motion.div
+        className="w-full max-w-4xl mx-auto mb-8"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.15,
+            },
+          },
+        }}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="flex flex-wrap justify-between gap-3">
+          {memoizedAnswers}
+        </div>
+      </motion.div>
+
+      {/* Countdown Timer */}
+      <motion.div
+        className="w-full max-w-4xl mx-auto"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.8 }}
+      >
+        <Countdown onTimeExpired={handleTimeExpired} />
+      </motion.div>
     </div>
   );
 }

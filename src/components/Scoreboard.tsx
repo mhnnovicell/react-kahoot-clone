@@ -134,7 +134,7 @@ const Player = ({ data, index }) => {
 const NavigationTimer = ({ seconds }) => {
   return (
     <motion.div
-      className="fixed bottom-0 flex items-center px-4 py-2 mt-6 text-white rounded-full shadow-lg right-4 bg-slate-800"
+      className="fixed flex items-center px-4 py-2 mt-6 text-white rounded-full shadow-lg bottom-4 right-4 bg-slate-800"
       initial={{ x: 100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
     >
@@ -327,13 +327,25 @@ export default function Scoreboard() {
     <div className="w-full h-full min-h-screen py-8 bg-gradient-to-b from-purple-900 to-blue-900">
       <div className="container px-4 mx-auto">
         {/* Header with logo */}
-        <div className="flex items-center justify-center mb-12">
-          <h1 className="text-4xl font-extrabold leading-none tracking-tight text-center text-white md:text-5xl lg:text-6xl">
-            Quizazoid
-          </h1>
-          <img className="w-32 h-32" src={logo1} alt="Quizazoid logo" />
+        <div className="flex items-center justify-center w-full">
+          <motion.div
+            className="flex items-center justify-center mb-4 md:mb-8"
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
+              Quizazoid
+            </h1>
+            <motion.img
+              className="w-24 h-24 md:w-32 md:h-32"
+              src={logo1}
+              alt="Quizazoid logo"
+              animate={{ rotate: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
+            />
+          </motion.div>
         </div>
-
         {/* Main content */}
         <motion.div
           className="max-w-4xl mx-auto"
