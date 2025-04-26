@@ -16,6 +16,8 @@ export const fetchPlayers = async () => {
     hasBeenAdded: player.hasBeenAdded,
     previousPoints: player.previousPoints,
     addedPoints: player.addedPoints,
+    onScoreboard: player.onScoreboard,
+    currentQuestionId: player.currentQuestionId,
   }));
 };
 

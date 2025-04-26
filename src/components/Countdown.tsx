@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Countdown() {
-  const [seconds, setSeconds] = useState(60); // Set initial countdown value
+export default function Countdown({ onTimeExpired }) {
+  const [seconds, setSeconds] = useState(60); // 60-second countdown
 
   useEffect(() => {
     if (seconds > 0) {
       const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
       return () => clearTimeout(timer);
+    } else if (seconds === 0 && onTimeExpired) {
+      onTimeExpired();
     }
-  }, [seconds]);
+  }, [seconds, onTimeExpired]);
 
   const progressBarWidth = (seconds / 60) * 100; // Calculate progress bar width
 
@@ -20,7 +22,7 @@ export default function Countdown() {
         role="alert"
       >
         <div className="flex items-center justify-center text-sm font-normal text-center">
-          <p className="mb-0 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl ">
+          <p className="mb-0 text-lg font-medium leading-none tracking-tight text-left text-white md:text-2xl">
             Sekunder:
           </p>
           <h3

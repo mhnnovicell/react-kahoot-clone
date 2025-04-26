@@ -26,11 +26,17 @@ const CountUp = ({ start, end }) => {
   const [value, setValue] = useState(start);
 
   useEffect(() => {
+    // Skip animation if start and end values are the same
+    if (start === end) {
+      setValue(end);
+      return;
+    }
+
     controls.start({
       value: end,
       transition: { duration: 2, ease: 'easeInOut', delay: 1 },
     });
-  }, [end, controls]);
+  }, [end, controls, start]);
 
   return (
     <motion.span
@@ -43,30 +49,72 @@ const CountUp = ({ start, end }) => {
   );
 };
 
-const Player = ({ data }) => (
-  <motion.div
-    layout
-    className="rounded-full w-3/5 my-1 flex justify-between items-center max-w-lg min-w-fit px-5 py-2.5 text-sm font-medium text-center text-white"
-    key={data.id}
-    style={{ backgroundColor: data.class }}
-  >
-    {data.name}
-    <span
-      className={`bg-slate-700 w-auto text-white inline-flex justify-center self-center items-center text-center text-sm font-extrabold px-3 rounded-full`}
+const Player = ({ data }) => {
+  // Calculate points earned in this round
+  const pointsEarnedThisRound = data.points - (data.previousPoints || 0);
+
+  return (
+    <motion.div
+      layout
+      className="rounded-full w-3/5 my-1 flex justify-between items-center max-w-lg min-w-fit px-5 py-2.5 text-sm font-medium text-center text-white"
+      key={data.id}
+      style={{ backgroundColor: data.class }}
     >
-      <CountUp start={data.previousPoints || 0} end={data.points} />
-    </span>
-  </motion.div>
-);
+      {data.name}
+      <div className="flex items-center gap-2">
+        <span
+          className={`bg-slate-700 w-auto text-white inline-flex justify-center self-center items-center text-center text-sm font-extrabold px-3 rounded-full ml-2`}
+        >
+          {pointsEarnedThisRound > 0 ? (
+            <CountUp
+              start={data.points - pointsEarnedThisRound}
+              end={data.points}
+            />
+          ) : (
+            data.points
+          )}
+        </span>
+        {pointsEarnedThisRound > 0 && (
+          <span className="text-xs font-bold text-white">
+            +{pointsEarnedThisRound}
+          </span>
+        )}
+        {pointsEarnedThisRound === 0 && (
+          <span className="text-xs font-bold text-black">+0</span>
+        )}
+      </div>
+    </motion.div>
+  );
+};
 
 export default function Scoreboard() {
   const [backgroundColor, setBackgroundColor] = useState(
     getRandomBackgroundColor,
   );
   const [playersList, setPlayersList] = useState([]);
+  const [allPlayersPresent, setAllPlayersPresent] = useState(false);
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
+
+  // Update current player's status to show they're on the scoreboard
+  useEffect(() => {
+    const updatePlayerStatus = async () => {
+      // Get current player info from sessionStorage
+      const players = JSON.parse(sessionStorage.getItem('players')) || [];
+      if (players.length > 0) {
+        // Update the current player's status in Supabase
+        const { error } = await supabase
+          .from('players')
+          .update({ onScoreboard: true, currentQuestionId: currentId })
+          .eq('id', players[0].id); // Assuming the first player is the current user
+
+        if (error) console.error('Error updating player status:', error);
+      }
+    };
+
+    updatePlayerStatus();
+  }, [currentId]);
 
   const checkAndFetchPlayers = useCallback(async () => {
     const { data, error } = await supabase
@@ -75,10 +123,27 @@ export default function Scoreboard() {
       .order('points', { ascending: false });
 
     if (error) console.error('Error fetching scoreboard:', error);
-    console.log(data, 'players');
+
+    // Store players data
     sessionStorage.setItem('players', JSON.stringify(data));
     setPlayersList(data);
-  }, []);
+
+    // Check if all active players are on this scoreboard
+    const activePlayers = data.filter((player) => player.hasBeenAdded);
+    const playersOnScoreboard = data.filter(
+      (player) =>
+        player.hasBeenAdded &&
+        player.onScoreboard &&
+        player.currentQuestionId === currentId,
+    );
+
+    if (
+      activePlayers.length > 0 &&
+      activePlayers.length === playersOnScoreboard.length
+    ) {
+      setAllPlayersPresent(true);
+    }
+  }, [currentId]);
 
   useEffect(() => {
     checkAndFetchPlayers();
@@ -93,27 +158,37 @@ export default function Scoreboard() {
           table: 'players',
         },
         (payload) => {
-          console.log(payload, 'payload');
           checkAndFetchPlayers();
         },
       )
       .subscribe();
 
-    const nextId = currentId + 1;
+    // Only set up the timer for navigation when all players are present
+    let timeoutId;
+    if (allPlayersPresent) {
+      console.log(allPlayersPresent, 'allPlayersPresent');
+      const nextId = currentId + 1;
+      timeoutId = window.setTimeout(() => {
+        // Reset onScoreboard status for all players before navigating
+        const resetPlayers = async () => {
+          const { error } = await supabase
+            .from('players')
+            .update({ onScoreboard: false })
+            .eq('currentQuestionId', currentId);
 
-    const timeoutId = window.setTimeout(() => {
-      navigate(`/questions/${nextId}`);
-    }, 7000);
+          if (error) console.error('Error resetting player status:', error);
+          navigate(`/questions/${nextId}`);
+        };
+
+        resetPlayers();
+      }, 7000);
+    }
 
     return () => {
       supabase.removeChannel(subscription);
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [checkAndFetchPlayers, currentId, navigate]);
-
-  const sortedPlayersList = useMemo(() => {
-    return playersList.sort((a, b) => b.points - a.points);
-  }, [playersList]);
+  }, [checkAndFetchPlayers, currentId, navigate, allPlayersPresent]);
 
   return (
     <div className="w-full h-full d-flex">
@@ -132,7 +207,7 @@ export default function Scoreboard() {
             Scoreboard
           </h2>
           <AnimatePresence>
-            {sortedPlayersList.map((data) => (
+            {playersList.map((data) => (
               <Player key={data.id} data={data} />
             ))}
           </AnimatePresence>
