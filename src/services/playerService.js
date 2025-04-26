@@ -45,28 +45,35 @@ export const insertPlayer = async (name, color) => {
 };
 
 export const deletePlayer = async (name) => {
-  const { data, error } = await supabase
-    .from('players')
-    .delete()
-    .eq('name', name);
-
-  if (error) {
-    console.error(error);
-    return false;
-  }
-
-  // Check if we're deleting the current player
   const currentPlayerId = localStorage.getItem('currentPlayerId');
+
+  // First, check if the player we're deleting is the current player
+  // We need to do this BEFORE deleting the player from the database
+  let isCurrentPlayer = false;
+
   if (currentPlayerId) {
-    const { data: playerData } = await supabase
+    const { data: playerData, error: fetchError } = await supabase
       .from('players')
       .select('name')
       .eq('id', currentPlayerId)
       .single();
 
-    if (playerData && playerData.name === name) {
-      localStorage.removeItem('currentPlayerId');
+    if (!fetchError && playerData && playerData.name === name) {
+      isCurrentPlayer = true;
     }
+  }
+
+  // Now delete the player from the database
+  const { error } = await supabase.from('players').delete().eq('name', name);
+
+  if (error) {
+    console.error('Error deleting player:', error);
+    return false;
+  }
+
+  // If we determined this was the current player, remove the ID from localStorage
+  if (isCurrentPlayer) {
+    localStorage.removeItem('currentPlayerId');
   }
 
   return true;
