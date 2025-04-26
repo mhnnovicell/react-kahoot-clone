@@ -83,6 +83,47 @@ export default function Questions() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // Add this at the beginning of your Questions component
+  useEffect(() => {
+    const validateCurrentPlayer = async () => {
+      const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+
+      if (!currentPlayerId) {
+        console.error('No currentPlayerId found in sessionStorage!');
+        navigate('/'); // Redirect to player creation
+        return;
+      }
+
+      // Load the specific player data for this session
+      try {
+        const { data, error } = await supabase
+          .from('players')
+          .select('*')
+          .eq('id', currentPlayerId)
+          .single();
+
+        if (error || !data) {
+          console.error('Failed to load current player data:', error);
+          // Clear invalid currentPlayerId
+          sessionStorage.removeItem('currentPlayerId');
+          navigate('/'); // Redirect to player creation
+          return;
+        }
+
+        // Update sessionStorage with just this player
+        const playersArray = [data];
+        sessionStorage.setItem('players', JSON.stringify(playersArray));
+
+        console.log('Current player loaded successfully:', data);
+      } catch (err) {
+        console.error('Error validating current player:', err);
+        navigate('/');
+      }
+    };
+
+    validateCurrentPlayer();
+  }, [navigate]);
+
   // Fetch questions from Sanity
   useEffect(() => {
     const getQuestionsFromSanity = async () => {
@@ -218,14 +259,46 @@ export default function Questions() {
     async (isCorrect, answerKey) => {
       dispatch({ type: ACTIONS.SET_CLICKED_ANSWER, payload: answerKey });
 
-      let players = JSON.parse(sessionStorage.getItem('players')) || [];
-      if (players.length === 0) {
-        console.error('No players found');
+      // Get the current player ID from sessionStorage
+      const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+      if (!currentPlayerId) {
+        console.error('No currentPlayerId found in sessionStorage');
         return;
       }
 
-      // Get the current player ID from sessionStorage
-      const currentPlayerId = sessionStorage.getItem('currentPlayerId');
+      console.log('Current player ID from sessionStorage:', currentPlayerId);
+
+      let players = JSON.parse(sessionStorage.getItem('players')) || [];
+      if (players.length === 0) {
+        console.error('No players found in sessionStorage');
+
+        // Try to reload the current player from the database
+        try {
+          const { data, error } = await supabase
+            .from('players')
+            .select('*')
+            .eq('id', currentPlayerId)
+            .single();
+
+          if (error || !data) {
+            console.error('Failed to reload player data:', error);
+            return;
+          }
+
+          // Update players array with just this player
+          players = [data];
+          sessionStorage.setItem('players', JSON.stringify(players));
+          console.log('Player reloaded from database:', data);
+        } catch (err) {
+          console.error('Error reloading player:', err);
+          return;
+        }
+      }
+
+      console.log(
+        'Players in sessionStorage:',
+        players.map((p) => ({ id: p.id, name: p.name })),
+      );
 
       // Find the current player based on ID
       const currentPlayer = players.find(
@@ -233,83 +306,116 @@ export default function Questions() {
       );
 
       if (!currentPlayer) {
-        console.error('Current player not found');
-        return;
+        console.error('Current player not found! ID:', currentPlayerId);
+
+        // Try to reload the player from database as a fallback
+        try {
+          const { data, error } = await supabase
+            .from('players')
+            .select('*')
+            .eq('id', currentPlayerId)
+            .single();
+
+          if (error || !data) {
+            console.error('Failed to reload player as fallback:', error);
+            return;
+          }
+
+          // Use this player and update sessionStorage
+          const updatedPlayers = [...players, data];
+          sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
+
+          // Continue with the reloaded player
+          const endTime = Date.now();
+          processAnswer(data, isCorrect, answerKey, endTime);
+          return;
+        } catch (err) {
+          console.error('Error in fallback player reload:', err);
+          return;
+        }
       }
 
       const endTime = Date.now();
-      const timeTaken = (endTime - startTime) / 1000; // Time in seconds
-
-      let earnedPoints = 0;
-      if (isCorrect) {
-        // Award full 1000 points if answered within 5 seconds
-        if (timeTaken <= 5) {
-          earnedPoints = 1000;
-        } else {
-          // After 5 seconds, decrease points over the remaining 55 seconds
-          const pointsDeduction = Math.min(timeTaken, 60) * (1000 / 60);
-          earnedPoints = Math.max(1000 - pointsDeduction, 0);
-        }
-        earnedPoints = Math.round(earnedPoints);
-      } else {
-        earnedPoints = 0;
-        // Find the correct answer key
-        const correctAnswer = answerData.find((data) => data.korrekt);
-        if (correctAnswer) {
-          dispatch({
-            type: ACTIONS.SET_CORRECT_ANSWER_KEY,
-            payload: correctAnswer._key,
-          });
-        }
-      }
-
-      dispatch({ type: ACTIONS.SET_SELECTED_ANSWER, payload: answerKey });
-      dispatch({ type: ACTIONS.SET_ADDED_POINTS, payload: earnedPoints });
-      dispatch({ type: ACTIONS.UPDATE_POINTS, payload: earnedPoints });
-
-      try {
-        // Update only the current player
-        const { data, error } = await supabase
-          .from('players')
-          .update({
-            points: currentPlayer.points + earnedPoints,
-            previousPoints: currentPlayer.points,
-            addedPoints: earnedPoints,
-          })
-          .eq('id', currentPlayer.id)
-          .select('*');
-
-        if (error) {
-          throw error;
-        }
-
-        // Update only the current player in local storage
-        const updatedPlayers = players.map((player) => {
-          if (player.id === currentPlayer.id) {
-            return {
-              ...player,
-              previousPoints: player.points,
-              points: player.points + earnedPoints,
-              addedPoints: earnedPoints,
-            };
-          }
-          return player;
-        });
-
-        sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
-
-        // Navigate after a delay
-        const timer = window.setTimeout(() => {
-          navigate(`/scoreboard/${id}`);
-        }, 3500);
-
-        return () => clearTimeout(timer);
-      } catch (error) {
-        console.error('Error updating points:', error);
-      }
+      processAnswer(currentPlayer, isCorrect, answerKey, endTime);
     },
     [answerData, startTime, navigate, id],
   );
+
+  // Helper function to process the answer logic
+  const processAnswer = async (player, isCorrect, answerKey, endTime) => {
+    const timeTaken = (endTime - startTime) / 1000; // Time in seconds
+
+    let earnedPoints = 0;
+    if (isCorrect) {
+      // Award full 1000 points if answered within 5 seconds
+      if (timeTaken <= 5) {
+        earnedPoints = 1000;
+      } else {
+        // After 5 seconds, decrease points over the remaining 55 seconds
+        const pointsDeduction = Math.min(timeTaken, 60) * (1000 / 60);
+        earnedPoints = Math.max(1000 - pointsDeduction, 0);
+      }
+      earnedPoints = Math.round(earnedPoints);
+    } else {
+      earnedPoints = 0;
+      // Find the correct answer key
+      const correctAnswer = answerData.find((data) => data.korrekt);
+      if (correctAnswer) {
+        dispatch({
+          type: ACTIONS.SET_CORRECT_ANSWER_KEY,
+          payload: correctAnswer._key,
+        });
+      }
+    }
+
+    dispatch({ type: ACTIONS.SET_SELECTED_ANSWER, payload: answerKey });
+    dispatch({ type: ACTIONS.SET_ADDED_POINTS, payload: earnedPoints });
+    dispatch({ type: ACTIONS.UPDATE_POINTS, payload: earnedPoints });
+
+    try {
+      // Update the player
+      const { data, error } = await supabase
+        .from('players')
+        .update({
+          points: player.points + earnedPoints,
+          previousPoints: player.points,
+          addedPoints: earnedPoints,
+        })
+        .eq('id', player.id)
+        .select('*');
+
+      console.log('Player after update:', data);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update players in sessionStorage
+      let players = JSON.parse(sessionStorage.getItem('players')) || [];
+      const updatedPlayers = players.map((p) => {
+        if (p.id === player.id) {
+          return {
+            ...p,
+            previousPoints: p.points,
+            points: p.points + earnedPoints,
+            addedPoints: earnedPoints,
+          };
+        }
+        return p;
+      });
+
+      sessionStorage.setItem('players', JSON.stringify(updatedPlayers));
+
+      // Navigate after a delay
+      const timer = window.setTimeout(() => {
+        navigate(`/scoreboard/${id}`);
+      }, 3500);
+
+      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error('Error updating points:', error);
+    }
+  };
 
   const renderAnswer = useCallback(
     (data) => (
