@@ -88,7 +88,7 @@ const Player = ({ data, index }) => {
 
         {/* Right side: Points */}
         <div className="px-5 py-2 text-xl font-extrabold text-white rounded-lg shadow-md bg-slate-800/60">
-          {pointsEarnedThisRound > 0 ? (
+          {pointsEarnedThisRound !== 0 ? (
             <CountUp
               start={data.points - pointsEarnedThisRound}
               end={data.points}
@@ -98,6 +98,7 @@ const Player = ({ data, index }) => {
           )}
         </div>
 
+        {/* Points indicator with three states: positive, negative, or zero */}
         {pointsEarnedThisRound > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -106,6 +107,15 @@ const Player = ({ data, index }) => {
             whileHover={{ scale: 1.05 }}
           >
             +{pointsEarnedThisRound}
+          </motion.div>
+        ) : pointsEarnedThisRound < 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-3 py-1 text-lg font-bold text-white bg-red-500 rounded-full"
+            whileHover={{ scale: 1.05 }}
+          >
+            {pointsEarnedThisRound}
           </motion.div>
         ) : (
           <motion.div

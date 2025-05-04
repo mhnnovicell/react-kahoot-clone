@@ -219,7 +219,10 @@ export default function Questions() {
         }
         earnedPoints = Math.round(earnedPoints);
       } else {
-        earnedPoints = 0;
+        // For wrong answers, deduct 100 points if current score > 0
+        earnedPoints =
+          currentPlayer.points >= 100 ? -100 : -currentPlayer.points;
+
         // Find the correct answer key
         const correctAnswer = answerData.find((data) => data.korrekt);
         if (correctAnswer) {
@@ -235,8 +238,9 @@ export default function Questions() {
       dispatch({ type: ACTIONS.UPDATE_POINTS, payload: earnedPoints });
 
       try {
-        // Update the player in the database
-        const totalPoints = currentPlayer.points + earnedPoints;
+        // Calculate total points, ensuring it doesn't go negative
+        const totalPoints = Math.max(0, currentPlayer.points + earnedPoints);
+
         await updatePlayerScore(
           currentPlayer.id,
           totalPoints,

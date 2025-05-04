@@ -4,7 +4,8 @@ import App from './App.jsx';
 import './index.css';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import ErrorPage from './pages/ErrorPage.tsx';
-import Loading from './components/Loading.tsx'; // Import the Loader component
+import Loading from './components/Loading.tsx';
+import ScrollToTop from './helpers/ScrollToTop.tsx'; // Import the new component
 
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage'));
 const ScoreboardPage = lazy(() => import('./pages/ScoreboardPage'));
@@ -15,6 +16,7 @@ const router = createBrowserRouter([
     path: '/',
     element: (
       <Suspense fallback={<Loading />}>
+        <ScrollToTop />
         <App />
       </Suspense>
     ),
@@ -24,6 +26,7 @@ const router = createBrowserRouter([
     path: '/questions/:id',
     element: (
       <Suspense>
+        <ScrollToTop />
         <QuestionsPage />
       </Suspense>
     ),
@@ -32,6 +35,7 @@ const router = createBrowserRouter([
     path: '/scoreboard/:id',
     element: (
       <Suspense fallback={<Loading />}>
+        <ScrollToTop />
         <ScoreboardPage />
       </Suspense>
     ),
@@ -40,6 +44,7 @@ const router = createBrowserRouter([
     path: '/podium',
     element: (
       <Suspense fallback={<Loading />}>
+        <ScrollToTop />
         <PodiumPage />
       </Suspense>
     ),
