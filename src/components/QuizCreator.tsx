@@ -977,18 +977,31 @@ export default function QuizCreator() {
       </motion.div>
 
       {/* Step indicators */}
-      <div className="flex items-center justify-center w-full max-w-4xl mx-auto mb-6">
-        {[1, 2, 3].map((stepNumber) => (
-          <div key={stepNumber} className="flex-1 w-full">
-            <div className="flex items-center w-full">
+      {/* Step indicators - Improved layout */}
+      <div className="w-full max-w-4xl mx-auto mb-8">
+        <div className="relative flex items-center justify-between">
+          {/* Connection line running through entire stepper */}
+          <div className="absolute left-0 right-0 h-1 -translate-y-1/2 bg-gray-600 top-1/2"></div>
+
+          {/* Steps */}
+          {[1, 2, 3].map((stepNumber) => (
+            <div
+              key={stepNumber}
+              className="relative z-10 flex flex-col items-center"
+            >
+              {/* Step circle */}
               <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  step >= stepNumber ? 'bg-purple-600' : 'bg-gray-600'
+                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
+                  step > stepNumber
+                    ? 'bg-green-500 text-white'
+                    : step === stepNumber
+                      ? 'bg-purple-600 ring-4 ring-purple-300/50 text-white'
+                      : 'bg-gray-600 text-gray-200'
                 }`}
               >
                 {step > stepNumber ? (
                   <svg
-                    className="w-5 h-5 text-white"
+                    className="w-6 h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1001,28 +1014,29 @@ export default function QuizCreator() {
                     />
                   </svg>
                 ) : (
-                  <span className="text-white">{stepNumber}</span>
+                  <span className="text-sm font-bold">{stepNumber}</span>
                 )}
               </div>
-              <div
-                className={`flex-1 h-1 mx-2 ${
-                  stepNumber < 3
-                    ? step > stepNumber
-                      ? 'bg-purple-600'
-                      : 'bg-gray-600'
-                    : 'hidden'
-                }`}
-              />
+
+              {/* Step label */}
+              <div className="text-sm font-medium text-white">
+                {stepNumber === 1
+                  ? 'Quiz Info'
+                  : stepNumber === 2
+                    ? 'Questions'
+                    : 'Review'}
+              </div>
+
+              {/* Progress indicator */}
+              {step === stepNumber && (
+                <motion.div
+                  className="absolute w-16 h-1 bg-purple-500 rounded-full -bottom-1"
+                  layoutId="activeStep"
+                />
+              )}
             </div>
-            <div className="mt-1 text-xs text-center text-white">
-              {stepNumber === 1
-                ? 'Quiz Info'
-                : stepNumber === 2
-                  ? 'Questions'
-                  : 'Review'}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Success/Error Messages */}

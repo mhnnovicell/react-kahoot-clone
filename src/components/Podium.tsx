@@ -86,6 +86,12 @@ const Podium = () => {
     return heights[index];
   };
 
+  const handlePlayAgain = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const quizId = searchParams.get('quizId');
+    window.location.href = quizId ? `/signup?quizId=${quizId}` : '/';
+  };
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full p-6">
       {/* <motion.div
@@ -216,7 +222,7 @@ const Podium = () => {
           className="px-8 py-3 text-lg font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => (window.location.href = '/')}
+          onClick={handlePlayAgain}
         >
           Play Again
         </motion.button>

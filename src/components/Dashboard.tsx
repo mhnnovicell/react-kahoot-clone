@@ -89,7 +89,7 @@ export default function Dashboard() {
 
       // Navigate to the home screen where players can join
       // Include the quizId as a parameter
-      navigate(`/?quizId=${quizId}`);
+      navigate(`/signup?quizId=${quizId}`);
     } catch (err) {
       console.error('Error starting quiz:', err);
       alert('Failed to start quiz');
@@ -121,12 +121,30 @@ export default function Dashboard() {
   const handleDeleteQuiz = async (id) => {
     if (confirm('Are you sure you want to delete this quiz?')) {
       try {
-        await client.delete(id);
-        // Update the UI
-        setQuizzes(quizzes.filter((quiz) => quiz._id !== id));
+        // Set a "deleting" state on the quiz to be deleted
+        setQuizzes(
+          quizzes.map((quiz) =>
+            quiz._id === id ? { ...quiz, isDeleting: true } : quiz,
+          ),
+        );
+
+        // Wait for the animation to finish before actually removing from state
+        setTimeout(async () => {
+          await client.delete(id);
+          // Update the UI
+          setQuizzes((currentQuizzes) =>
+            currentQuizzes.filter((quiz) => quiz._id !== id),
+          );
+        }, 500); // Match this to your exit animation duration
       } catch (err) {
         console.error('Error deleting quiz:', err);
         alert('Failed to delete quiz');
+        // Restore the quiz if deletion failed
+        setQuizzes(
+          quizzes.map((quiz) =>
+            quiz._id === id ? { ...quiz, isDeleting: false } : quiz,
+          ),
+        );
       }
     }
   };
@@ -220,7 +238,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {quizzes.map((quiz, index) => (
                 <motion.div
                   key={quiz._id}
@@ -228,10 +246,28 @@ export default function Dashboard() {
                     activeQuiz === quiz._id
                       ? 'ring-4 ring-green-400 bg-gradient-to-b from-indigo-900/90 to-purple-900/90'
                       : 'bg-gradient-to-b from-indigo-900/80 to-purple-900/80'
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  } ${quiz.isDeleting ? 'pointer-events-none' : ''}`}
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{
+                    opacity: quiz.isDeleting ? 0 : 1,
+                    y: quiz.isDeleting ? -50 : 0,
+                    scale: quiz.isDeleting ? 0.8 : 1,
+                    rotateZ: quiz.isDeleting ? -5 : 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.8,
+                    y: -50,
+                    rotateZ: -5,
+                  }}
+                  transition={{
+                    type: 'spring',
+                    duration: 0.5,
+                    delay: index * 0.05,
+                    // Use different timing for exit animations
+                    exit: { duration: 0.3 },
+                  }}
+                  layout
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
                   {/* Quiz Image */}

@@ -100,7 +100,7 @@ export default function Questions() {
 
       if (!player) {
         console.error('No current player found');
-        navigate('/'); // Redirect to player creation
+        navigate('/signup'); // Redirect to player creation
         return;
       }
 

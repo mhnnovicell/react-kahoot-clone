@@ -20,10 +20,19 @@ const router = createBrowserRouter([
     element: (
       <Suspense fallback={<Loading />}>
         <ScrollToTop />
-        <App />
+        <DashboardPage />
       </Suspense>
     ),
     errorElement: <ErrorPage />,
+  },
+  {
+    path: '/signup',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <ScrollToTop />
+        <App />
+      </Suspense>
+    ),
   },
   {
     path: '/create-quiz',
