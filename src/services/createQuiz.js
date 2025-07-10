@@ -7,7 +7,6 @@ export const createQuiz = async (quizData) => {
       return client.create({
         _type: 'questions', // Using your existing document type
         title: question.title,
-        slug: `${slug(question.title, { lower: true })}-${idx}`,
         image: {
           _type: 'image',
           asset: {

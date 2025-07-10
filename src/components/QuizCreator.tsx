@@ -14,15 +14,21 @@ const emptyAnswer = () => ({
 });
 
 // Helper to create an empty question with default answers
-const emptyQuestion = () => ({
-  id: uuidv4(),
-  title: '',
-  imageFile: null,
-  imagePreview: '',
-  imageAssetId: null,
-  answers: [emptyAnswer(), emptyAnswer(), emptyAnswer(), emptyAnswer()],
-  correctAnswerIndex: 0,
-});
+const emptyQuestion = () => {
+  const answers = [emptyAnswer(), emptyAnswer(), emptyAnswer(), emptyAnswer()];
+  // Make the first answer correct by default
+  answers[0].isCorrect = true;
+
+  return {
+    id: uuidv4(),
+    title: '',
+    imageFile: null,
+    imagePreview: '',
+    imageAssetId: null,
+    answers: answers,
+    correctAnswerIndex: 0,
+  };
+};
 
 export default function QuizCreator() {
   const navigate = useNavigate();
@@ -486,55 +492,6 @@ export default function QuizCreator() {
       case 2:
         return (
           <>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">
-                Questions ({activeQuestionIndex + 1}/{questions.length})
-              </h2>
-
-              <div className="flex gap-2">
-                <motion.button
-                  type="button"
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={addQuestion}
-                >
-                  Add Question
-                </motion.button>
-
-                {questions.length > 1 && (
-                  <motion.button
-                    type="button"
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => removeQuestion(activeQuestion.id)}
-                  >
-                    Delete Question
-                  </motion.button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap mb-4 gap-1.5">
-              {questions.map((q, index) => (
-                <motion.button
-                  key={q.id}
-                  type="button"
-                  className={`px-3 py-1.5 text-sm font-medium text-white rounded-md ${
-                    index === activeQuestionIndex
-                      ? 'bg-purple-600'
-                      : 'bg-purple-600/50 hover:bg-purple-600/70'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setActiveQuestionIndex(index)}
-                >
-                  {index + 1}
-                </motion.button>
-              ))}
-            </div>
-
             <div className="overflow-hidden shadow-xl bg-gradient-to-b from-indigo-900/90 to-purple-900/80 rounded-xl backdrop-blur-sm">
               <div className="p-4 font-bold text-center text-white bg-gradient-to-r from-purple-600 to-indigo-600">
                 Question {activeQuestionIndex + 1}
@@ -788,6 +745,92 @@ export default function QuizCreator() {
                         />
                       </svg>
                       Add Answer Option
+                    </motion.button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sticky question navigation header */}
+            <div className="sticky top-0 z-10 p-4 my-6 shadow-lg bg-gradient-to-b from-indigo-900/95 to-purple-900/95 rounded-xl backdrop-blur-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {/* Left side: Question pagination */}
+                <div className="flex items-center">
+                  <h2 className="mr-4 text-xl font-bold text-white">
+                    Question {activeQuestionIndex + 1} of {questions.length}
+                  </h2>
+
+                  <div className="flex max-w-xs p-1 space-x-1 overflow-x-auto md:max-w-md scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-transparent">
+                    {questions.map((q, index) => (
+                      <motion.button
+                        key={q.id}
+                        type="button"
+                        className={`flex-shrink-0 w-8 h-8 text-sm font-medium text-white rounded-full flex items-center justify-center ${
+                          index === activeQuestionIndex
+                            ? 'bg-purple-600 shadow-lg shadow-purple-600/30'
+                            : 'bg-purple-600/50 hover:bg-purple-600/70'
+                        }`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setActiveQuestionIndex(index)}
+                      >
+                        {index + 1}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right side: Add/Delete buttons */}
+                <div className="flex gap-2">
+                  <motion.button
+                    type="button"
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={addQuestion}
+                  >
+                    <span className="flex items-center">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                      Add Question
+                    </span>
+                  </motion.button>
+
+                  {questions.length > 1 && (
+                    <motion.button
+                      type="button"
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => removeQuestion(activeQuestion.id)}
+                    >
+                      <span className="flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        Delete Question
+                      </span>
                     </motion.button>
                   )}
                 </div>
