@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo1 from '../assets/logo1.png';
+import { client } from '../services/sanityClient'; // Add this import
+import quizImage from '../assets/quiz.jpg';
 
 import {
   fetchPlayers,
@@ -19,7 +21,8 @@ export default function CreatePlayers() {
   const [startGame, setStartGame] = useState(false);
   const [playerExists, setPlayerExists] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState(null);
-
+  const [quizInfo, setQuizInfo] = useState(null);
+  const [quizLoading, setQuizLoading] = useState(true);
   const navigate = useNavigate();
 
   // Check if current player exists
@@ -33,6 +36,42 @@ export default function CreatePlayers() {
     };
 
     checkCurrentPlayer();
+  }, []);
+
+  useEffect(() => {
+    const fetchQuizDetails = async () => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
+
+        if (!quizId) {
+          setQuizLoading(false);
+          return;
+        }
+
+        const query = `*[_type == "quiz" && _id == $quizId][0] {
+          title,
+          description,
+          image {
+            asset-> {
+              url
+            }
+          }
+        }`;
+
+        const quiz = await client.fetch(query, { quizId });
+
+        if (quiz) {
+          setQuizInfo(quiz);
+        }
+      } catch (error) {
+        console.error('Error fetching quiz details:', error);
+      } finally {
+        setQuizLoading(false);
+      }
+    };
+
+    fetchQuizDetails();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -170,6 +209,50 @@ export default function CreatePlayers() {
             transition={{ repeat: Infinity, duration: 5, ease: 'easeInOut' }}
           />
         </div>
+      </motion.div>
+
+      <motion.div
+        className="mb-8 overflow-hidden shadow-lg rounded-xl bg-gradient-to-br from-purple-900/80 to-indigo-900/80"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {quizLoading ? (
+          <div className="flex items-center justify-center p-6">
+            <div className="w-6 h-6 border-2 border-white rounded-full border-t-transparent animate-spin"></div>
+            <p className="ml-2 text-white">Loading quiz...</p>
+          </div>
+        ) : quizInfo ? (
+          <>
+            {quizInfo.image?.asset?.url && (
+              <div className="relative w-full h-full overflow-hidden">
+                <img
+                  src={`${quizInfo.image.asset.url}?w=1920&h=1920&format=webp`}
+                  alt={quizInfo.title}
+                  className="object-cover w-full h-full"
+                />
+                {/* <img
+                  src={quizImage}
+                  alt={quizInfo.title}
+                  className="object-cover w-full h-full"
+                  loading="eager"
+                /> */}
+              </div>
+            )}
+            <div className="p-6">
+              <h2 className="mb-2 text-2xl font-bold text-white">
+                {quizInfo.title}
+              </h2>
+              {quizInfo.description && (
+                <p className="text-purple-200">{quizInfo.description}</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="p-6">
+            <p className="text-white">Quiz information not available</p>
+          </div>
+        )}
       </motion.div>
 
       {/* Main Card */}

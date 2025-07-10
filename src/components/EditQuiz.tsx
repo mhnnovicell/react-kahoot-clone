@@ -588,6 +588,7 @@ export default function EditQuiz() {
                           src={coverImagePreview}
                           alt="Cover Preview"
                           className="object-cover w-full h-full"
+                          loading="lazy"
                         />
                         {coverImageFile && (
                           <button
@@ -775,6 +776,7 @@ export default function EditQuiz() {
                           src={activeQuestion.imagePreview}
                           alt="Preview"
                           className="object-cover w-full h-full"
+                          loading="lazy"
                         />
                         {activeQuestion.imageFile && (
                           <button
@@ -1052,6 +1054,7 @@ export default function EditQuiz() {
                         src={coverImagePreview}
                         alt="Quiz Cover"
                         className="object-cover w-full h-full"
+                        loading="lazy"
                       />
                     </div>
                   )}

@@ -192,7 +192,7 @@ export default function Questions() {
               type: ACTIONS.SET_QUESTION_IMAGE,
               payload:
                 currentQuestion.image.asset.url +
-                '?h=600&max-h=600&format=webp',
+                '?h=1920&max-h=1920&format=webp',
             });
           }
 

@@ -274,9 +274,10 @@ export default function Dashboard() {
                   <div className="relative w-full overflow-hidden bg-gray-800 h-96">
                     {quiz.image?.asset?.url ? (
                       <img
-                        src={`${quiz.image.asset.url}?h=300&max-h=300&format=webp`}
+                        src={`${quiz.image.asset.url}?h=1920&max-h=1920&format=webp`}
                         alt={quiz.title}
                         className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="flex items-center justify-center w-full h-full text-gray-400">

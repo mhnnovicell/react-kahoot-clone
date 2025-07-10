@@ -398,6 +398,7 @@ export default function QuizCreator() {
                           src={coverImagePreview}
                           alt="Cover Preview"
                           className="object-cover w-full h-full"
+                          loading="lazy"
                         />
                         <button
                           type="button"
@@ -529,6 +530,7 @@ export default function QuizCreator() {
                           src={activeQuestion.imagePreview}
                           alt="Preview"
                           className="object-cover w-full h-full"
+                          loading="lazy"
                         />
                         <button
                           type="button"
@@ -886,6 +888,7 @@ export default function QuizCreator() {
                         src={coverImagePreview}
                         alt="Quiz Cover"
                         className="object-cover w-full h-full"
+                        loading="lazy"
                       />
                     </div>
                   )}
