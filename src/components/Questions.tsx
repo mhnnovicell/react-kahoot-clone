@@ -142,33 +142,71 @@ export default function Questions() {
   useEffect(() => {
     const getQuestionsFromSanity = async () => {
       try {
-        const query = `*[_type == "questions"] {
+        // Get quiz ID from URL parameters instead of Supabase
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
+
+        if (!quizId) {
+          console.error('No quiz ID provided in URL');
+          return;
+        }
+
+        // Then fetch the specific quiz by ID with expanded question references
+        const query = `*[_type == "quiz" && _id == $quizId][0] {
           title,
           image {
             asset-> {
               url
             }
           },
-          Questions
+          "questions": questions[]-> {
+            title,
+            image {
+              asset-> {
+                url
+              }
+            },
+            Questions[] {
+              _key,
+              answer,
+              backgroundColor {
+                hex
+              },
+              korrekt
+            }
+          }
         }`;
-        const questions = await client.fetch(query);
 
-        if (questions && questions[id]) {
+        const quiz = await client.fetch(query, { quizId });
+
+        if (quiz && quiz.questions && quiz.questions[currentId]) {
+          const currentQuestion = quiz.questions[currentId];
+
           dispatch({
             type: ACTIONS.SET_QUESTION,
-            payload: questions[id].title,
+            payload: currentQuestion.title,
           });
 
-          dispatch({
-            type: ACTIONS.SET_QUESTION_IMAGE,
-            payload:
-              questions[id].image.asset.url + '?h=600&max-h=600&format=webp',
-          });
+          if (currentQuestion.image?.asset?.url) {
+            dispatch({
+              type: ACTIONS.SET_QUESTION_IMAGE,
+              payload:
+                currentQuestion.image.asset.url +
+                '?h=600&max-h=600&format=webp',
+            });
+          }
 
           dispatch({
             type: ACTIONS.SET_ANSWER_DATA,
-            payload: questions[id].Questions,
+            payload: currentQuestion.Questions.map((answer) => ({
+              _key: answer._key || Math.random().toString(), // Use existing key or generate one
+              answer: answer.answer,
+              backgroundColor: answer.backgroundColor,
+              korrekt: answer.korrekt,
+            })),
           });
+        } else {
+          console.error('Question not found:', { quizId, currentId });
         }
       } catch (error) {
         console.error('Error fetching questions:', error);
@@ -190,7 +228,7 @@ export default function Questions() {
       );
 
       // Navigate to the scoreboard
-      navigate(`/scoreboard/${id}`);
+      navigate(`/scoreboard/${id}?quizId=${searchParams.get('quizId')}`);
     } catch (error) {
       console.error('Error updating player points:', error);
       // Still navigate even if there's an error
@@ -247,14 +285,23 @@ export default function Questions() {
           currentPlayer.points,
         );
 
-        // Navigate after a delay
-        const timer = window.setTimeout(() => {
-          navigate(`/scoreboard/${id}`);
-        }, 3500);
+        // Get the quiz ID from the URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
 
-        return () => clearTimeout(timer);
+        // Navigate after a delay (don't return the cleanup function here)
+        setTimeout(() => {
+          navigate(`/scoreboard/${id}${quizId ? `?quizId=${quizId}` : ''}`);
+        }, 3500);
       } catch (error) {
         console.error('Error updating points:', error);
+
+        // Even if there's an error, try to navigate
+        setTimeout(() => {
+          const searchParams = new URLSearchParams(window.location.search);
+          const quizId = searchParams.get('quizId');
+          navigate(`/scoreboard/${id}${quizId ? `?quizId=${quizId}` : ''}`);
+        }, 3500);
       }
     },
     [answerData, startTime, navigate, id, currentPlayer],

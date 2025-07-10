@@ -124,8 +124,11 @@ export default function CreatePlayers() {
   }, []);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const quizId = searchParams.get('quizId');
+
     if (startGame) {
-      navigate('/questions/0');
+      navigate(`/questions/0${quizId ? `?quizId=${quizId}` : ''}`);
     }
   }, [startGame, navigate]);
 

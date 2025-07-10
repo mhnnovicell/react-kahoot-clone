@@ -170,14 +170,26 @@ export default function Scoreboard() {
   useEffect(() => {
     const checkIfLastQuestion = async () => {
       try {
-        const query = `*[_type == "questions"] {
-          _id
-        }`;
-        const questions = await client.fetch(query);
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
 
-        // If current question ID matches the last question's index
-        if (currentId === questions.length - 1) {
-          setIsLastQuestion(true);
+        if (!quizId) {
+          console.error('No quiz ID provided in URL');
+          return;
+        }
+
+        // Fetch only the questions for the current quiz
+        const query = `*[_type == "quiz" && _id == $quizId][0] {
+          "questionsCount": count(questions)
+        }`;
+
+        const result = await client.fetch(query, { quizId });
+
+        if (result && result.questionsCount) {
+          // Check if we're on the last question (0-based index)
+          if (currentId + 1 >= result.questionsCount) {
+            setIsLastQuestion(true);
+          }
         }
       } catch (error) {
         console.error('Error checking if last question:', error);
@@ -295,19 +307,22 @@ export default function Scoreboard() {
               console.error('Error resetting player status:', error);
             }
 
-            // Navigate after the database update completes
+            const searchParams = new URLSearchParams(window.location.search);
+            const quizId = searchParams.get('quizId');
+
+            // Navigate with the quizId
             if (isLastQuestion) {
-              navigate('/podium');
+              navigate(`/podium?quizId=${quizId}`);
             } else {
-              navigate(`/questions/${nextId}`);
+              navigate(`/questions/${nextId}?quizId=${quizId}`);
             }
           } catch (err) {
             console.error('Error during navigation:', err);
             // Ensure we still navigate even if there's an exception
             if (isLastQuestion) {
-              navigate('/podium');
+              navigate(`/podium?quizId=${quizId}`);
             } else {
-              navigate(`/questions/${nextId}`);
+              navigate(`/questions/${nextId}?quizId=${quizId}`);
             }
           }
         })();

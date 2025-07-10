@@ -10,6 +10,9 @@ import ScrollToTop from './helpers/ScrollToTop.tsx'; // Import the new component
 const QuestionsPage = lazy(() => import('./pages/QuestionsPage'));
 const ScoreboardPage = lazy(() => import('./pages/ScoreboardPage'));
 const PodiumPage = lazy(() => import('./pages/PodiumPage'));
+const QuizCreatorPage = lazy(() => import('./pages/CreateQuizPage.tsx'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage.tsx'));
+const EditQuizPage = lazy(() => import('./pages/EditQuizPage.tsx')); // Add this line
 
 const router = createBrowserRouter([
   {
@@ -21,6 +24,33 @@ const router = createBrowserRouter([
       </Suspense>
     ),
     errorElement: <ErrorPage />,
+  },
+  {
+    path: '/create-quiz',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <ScrollToTop />
+        <QuizCreatorPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/edit-quiz/:id', // Add this new route
+    element: (
+      <Suspense fallback={<Loading />}>
+        <ScrollToTop />
+        <EditQuizPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <Suspense fallback={<Loading />}>
+        <ScrollToTop />
+        <DashboardPage />
+      </Suspense>
+    ),
   },
   {
     path: '/questions/:id',
