@@ -163,7 +163,7 @@ export default function Dashboard() {
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
         <h1 className="mr-4 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">
-          Quiz Dashboard
+          Quizazoid Dashboard
         </h1>
         <motion.img
           className="w-16 h-16 md:w-20 md:h-20"
