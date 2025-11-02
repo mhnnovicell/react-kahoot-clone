@@ -93,6 +93,32 @@ export default function Questions() {
   const navigate = useNavigate();
   const currentId = parseInt(id, 10);
 
+  useEffect(() => {
+    const initializePlayer = async () => {
+      try {
+        // Get player from database using getCurrentPlayer
+        const player = await getCurrentPlayer();
+
+        if (!player) {
+          console.error('No player found in database');
+          // Redirect back to signup
+          const searchParams = new URLSearchParams(window.location.search);
+          const quizId = searchParams.get('quizId');
+          navigate(`/signup${quizId ? `?quizId=${quizId}` : ''}`);
+          return;
+        }
+
+        console.log('Loaded player from database:', player);
+        setCurrentPlayer(player);
+        dispatch({ type: ACTIONS.SET_CURRENT_PLAYER, payload: player });
+      } catch (error) {
+        console.error('Error loading player:', error);
+      }
+    };
+
+    initializePlayer();
+  }, [dispatch, navigate]);
+
   // Load the current player
   useEffect(() => {
     const loadCurrentPlayer = async () => {

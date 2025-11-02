@@ -23,21 +23,40 @@ export default function CreatePlayers() {
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [quizInfo, setQuizInfo] = useState(null);
   const [quizLoading, setQuizLoading] = useState(true);
+
   const navigate = useNavigate();
 
-  // Check if current player exists
+  // Check if current player exists in database (not session storage)
   useEffect(() => {
     const checkCurrentPlayer = async () => {
-      const player = await getCurrentPlayer();
-      if (player) {
-        setCurrentPlayer(player);
-        setPlayerExists(true);
+      try {
+        // Get all players and check if any match this browser
+        const players = await fetchPlayers();
+
+        // Try session storage first as a hint, but verify against database
+        const storedPlayerId = sessionStorage.getItem('currentPlayerId');
+
+        if (storedPlayerId) {
+          const player = players.find((p) => p.id === parseInt(storedPlayerId));
+          if (player) {
+            setCurrentPlayer(player);
+            setPlayerExists(true);
+            console.log('Found player in database:', player);
+            return;
+          }
+        }
+
+        // Session storage was wrong or empty, clear it
+        sessionStorage.removeItem('currentPlayerId');
+      } catch (error) {
+        console.error('Error checking player:', error);
       }
     };
 
     checkCurrentPlayer();
   }, []);
 
+  // Fetch quiz details based on quizId
   useEffect(() => {
     const fetchQuizDetails = async () => {
       try {
@@ -74,6 +93,94 @@ export default function CreatePlayers() {
     fetchQuizDetails();
   }, []);
 
+  // Fetch and subscribe to player list
+  useEffect(() => {
+    const getPlayers = async () => {
+      const playerData = await fetchPlayers();
+      setDisplayValues(playerData.filter((player) => player.hasBeenAdded));
+    };
+
+    getPlayers();
+
+    // Subscribe to player changes
+    const playersChannel = supabase
+      .channel('players-list')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players' },
+        async () => {
+          console.log('Players changed, refreshing list');
+          const playerData = await fetchPlayers();
+          setDisplayValues(playerData.filter((player) => player.hasBeenAdded));
+
+          // Update current player if it exists
+          if (currentPlayer) {
+            const updated = playerData.find((p) => p.id === currentPlayer.id);
+            if (updated) {
+              setCurrentPlayer(updated);
+            } else {
+              // Player was deleted
+              setCurrentPlayer(null);
+              setPlayerExists(false);
+              sessionStorage.removeItem('currentPlayerId');
+            }
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(playersChannel);
+    };
+  }, [currentPlayer]);
+
+  // Listen for game start via Supabase realtime
+  useEffect(() => {
+    let navigationTimeout;
+
+    const adminChannel = supabase
+      .channel('admin-game-start')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin' },
+        (payload) => {
+          const shouldStart = (payload.new as { startGame: boolean }).startGame;
+
+          console.log('Game start signal received:', shouldStart);
+
+          if (shouldStart && currentPlayer) {
+            // Clear any existing timeout
+            if (navigationTimeout) {
+              clearTimeout(navigationTimeout);
+            }
+
+            // Add a small delay to ensure all clients are ready
+            const searchParams = new URLSearchParams(window.location.search);
+            const quizId = searchParams.get('quizId');
+
+            navigationTimeout = setTimeout(() => {
+              console.log(
+                'Navigating to questions for player:',
+                currentPlayer.id,
+              );
+              navigate(`/questions/0${quizId ? `?quizId=${quizId}` : ''}`);
+            }, 300);
+          }
+
+          setStartGame(shouldStart);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      if (navigationTimeout) {
+        clearTimeout(navigationTimeout);
+      }
+      supabase.removeChannel(adminChannel);
+    };
+  }, [navigate, currentPlayer]);
+
+  // Handle player creation
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -83,7 +190,7 @@ export default function CreatePlayers() {
     }
 
     try {
-      // First check if a player with this name already exists
+      // Check if name already exists in database
       const allPlayers = await fetchPlayers();
       const nameExists = allPlayers.some(
         (player) => player.name.toLowerCase() === value.trim().toLowerCase(),
@@ -96,11 +203,11 @@ export default function CreatePlayers() {
         return;
       }
 
-      // Check if user already has a player in this session
-      const existingPlayerId = sessionStorage.getItem('currentPlayerId');
-      if (existingPlayerId) {
+      // Check if this browser already created a player (in database)
+      const storedPlayerId = sessionStorage.getItem('currentPlayerId');
+      if (storedPlayerId) {
         const existingPlayer = allPlayers.find(
-          (p) => p.id === parseInt(existingPlayerId),
+          (p) => p.id === parseInt(storedPlayerId),
         );
         if (existingPlayer) {
           alert(
@@ -112,14 +219,22 @@ export default function CreatePlayers() {
         }
       }
 
+      // Create new player in database
       const newPlayer = await insertPlayer(value.trim(), color);
+
       if (newPlayer) {
+        console.log('Player created in database:', newPlayer);
         setCurrentPlayer(newPlayer);
         setPlayerExists(true);
         setValue('');
 
-        // Store the player ID in session storage
-        sessionStorage.setItem('currentPlayerId', newPlayer.id.toString());
+        // Store player ID as a hint only (not source of truth)
+        try {
+          sessionStorage.setItem('currentPlayerId', newPlayer.id.toString());
+        } catch (storageError) {
+          console.warn('Could not save to session storage:', storageError);
+          // This is fine - we have the data in the database
+        }
       }
     } catch (error) {
       console.error('Error creating player:', error);
@@ -127,77 +242,16 @@ export default function CreatePlayers() {
     }
   };
 
-  const removePlayer = useCallback(
-    async (name) => {
-      const success = await deletePlayer(name.name);
-      if (success && currentPlayer && currentPlayer.name === name.name) {
-        setCurrentPlayer(null);
-        setPlayerExists(false);
-      }
-      setValue('');
-    },
-    [currentPlayer],
-  );
-
-  useEffect(() => {
-    const isGameReady = supabase
-      .channel('admin')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'admin' },
-        async (payload) => {
-          setStartGame((payload.new as { startGame: boolean }).startGame);
-        },
-      )
-      .subscribe();
-
-    let isMounted = true;
-
-    const fetchAndSetPlayers = async () => {
-      const players = await fetchPlayers();
-      if (isMounted) setDisplayValues(players);
-    };
-
-    fetchAndSetPlayers();
-
-    const fetchPlayersFromSupabase = supabase
-      .channel('players')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'players' },
-        async () => {
-          if (isMounted) {
-            fetchAndSetPlayers();
-
-            // Re-check current player status
-            const currentPlayer = await getCurrentPlayer();
-            if (currentPlayer) {
-              setCurrentPlayer(currentPlayer);
-              setPlayerExists(true);
-            } else {
-              setCurrentPlayer(null);
-              setPlayerExists(false);
-            }
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(fetchPlayersFromSupabase);
-      supabase.removeChannel(isGameReady);
-    };
-  }, []);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const quizId = searchParams.get('quizId');
-
-    if (startGame) {
-      navigate(`/questions/0${quizId ? `?quizId=${quizId}` : ''}`);
+  // Handle player removal
+  const removePlayer = async (player) => {
+    const success = await deletePlayer(player.name);
+    if (success && currentPlayer && currentPlayer.name === player.name) {
+      setCurrentPlayer(null);
+      setPlayerExists(false);
+      sessionStorage.removeItem('currentPlayerId');
     }
-  }, [startGame, navigate]);
+    setValue('');
+  };
 
   const predefinedColors = [
     '#ef4444',

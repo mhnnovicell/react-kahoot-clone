@@ -80,21 +80,33 @@ export const deletePlayer = async (name) => {
 };
 
 export const getCurrentPlayer = async () => {
-  const currentPlayerId = sessionStorage.getItem('currentPlayerId');
-  if (!currentPlayerId) return null;
+  try {
+    // Try to get player ID from session storage as a hint
+    const storedPlayerId = sessionStorage.getItem('currentPlayerId');
 
-  const { data, error } = await supabase
-    .from('players')
-    .select('*')
-    .eq('id', currentPlayerId)
-    .single();
+    if (storedPlayerId) {
+      // Verify this player actually exists in the database
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('id', parseInt(storedPlayerId))
+        .single();
 
-  if (error) {
-    console.error('Error fetching current player:', error);
+      if (!error && data) {
+        console.log('Player found in database:', data);
+        return data;
+      }
+
+      // Player doesn't exist anymore, clear session storage
+      sessionStorage.removeItem('currentPlayerId');
+    }
+
+    // No valid player found
+    return null;
+  } catch (error) {
+    console.error('Error getting current player:', error);
     return null;
   }
-
-  return data;
 };
 
 export const updatePlayerScore = async (playerId, points, previousPoints) => {
