@@ -352,17 +352,28 @@ export default function Scoreboard() {
 
     // Detect overtakes by comparing previous and current rankings
     const newOvertaken = new Set();
-    data.forEach((player, currentIndex) => {
-      const previousIndex = previousRankings.current[player.id];
 
-      // If player moved up in ranking (lower index = better rank)
-      if (previousIndex !== undefined && previousIndex > currentIndex) {
-        newOvertaken.add(player.id);
-        console.log(
-          `${player.name} overtook! From ${previousIndex + 1} to ${currentIndex + 1}`,
-        );
-      }
-    });
+    // Check if this is the first load (previousRankings is empty)
+    const isFirstLoad = Object.keys(previousRankings.current).length === 0;
+
+    if (!isFirstLoad) {
+      // Only check for overtakes if we have previous data
+      data.forEach((player, currentIndex) => {
+        const previousIndex = previousRankings.current[player.id];
+
+        // If player moved up in ranking (lower index = better rank)
+        if (previousIndex !== undefined && previousIndex > currentIndex) {
+          newOvertaken.add(player.id);
+          console.log(
+            `🚀 ${player.name} overtook! From position ${previousIndex + 1} to ${currentIndex + 1}`,
+          );
+        }
+      });
+    } else {
+      console.log(
+        'First load - initializing rankings, no overtakes to detect yet',
+      );
+    }
 
     // Update previous rankings for next comparison
     const newRankings = {};
@@ -371,10 +382,16 @@ export default function Scoreboard() {
     });
     previousRankings.current = newRankings;
 
+    console.log('Current rankings:', newRankings);
+
     // Set overtaken players and clear after animation
     if (newOvertaken.size > 0) {
+      console.log('Players who overtook:', Array.from(newOvertaken));
       setOvertakenPlayers(newOvertaken);
-      setTimeout(() => setOvertakenPlayers(new Set()), 2000);
+      setTimeout(() => {
+        console.log('Clearing overtaken players');
+        setOvertakenPlayers(new Set());
+      }, 2000);
     }
 
     setPlayersList(data);
