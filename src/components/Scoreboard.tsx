@@ -280,59 +280,114 @@ export default function Scoreboard() {
       )
       .subscribe();
 
-    // Countdown for navigation when all players are present
     let countdownInterval;
     let navigationTimeout;
+    let navigationTimestamp; // Track when navigation should happen
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && navigationTimestamp) {
+        const now = Date.now();
+        const timeElapsed = now - navigationTimestamp;
+
+        // If navigation time has passed while tab was hidden, navigate immediately
+        if (timeElapsed >= 0) {
+          console.log(
+            'Tab became visible, navigation time has passed - navigating now',
+          );
+          performNavigation();
+        }
+      }
+    };
+
+    const performNavigation = async () => {
+      try {
+        // Reset onScoreboard status for all players before navigating
+        const { error } = await supabase
+          .from('players')
+          .update({ onScoreboard: false })
+          .eq('currentQuestionId', currentId);
+
+        if (error) {
+          console.error('Error resetting player status:', error);
+        }
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
+
+        // Navigate with the quizId
+        if (isLastQuestion) {
+          navigate(`/podium?quizId=${quizId}`);
+        } else {
+          const nextId = currentId + 1;
+          navigate(`/questions/${nextId}?quizId=${quizId}`);
+        }
+      } catch (err) {
+        console.error('Error during navigation:', err);
+        // Fallback navigation
+        const searchParams = new URLSearchParams(window.location.search);
+        const quizId = searchParams.get('quizId');
+        if (isLastQuestion) {
+          navigate(`/podium?quizId=${quizId}`);
+        } else {
+          const nextId = currentId + 1;
+          navigate(`/questions/${nextId}?quizId=${quizId}`);
+        }
+      }
+    };
 
     if (allPlayersPresent) {
       const nextId = currentId + 1;
 
-      // Setup countdown
-      countdownInterval = setInterval(() => {
-        setCountdownSeconds((prev) => Math.max(0, prev - 1));
-      }, 1000);
+      // Calculate when navigation should happen (10 seconds from now)
+      navigationTimestamp = Date.now() + 10000;
+
+      // Setup countdown - use requestAnimationFrame for better reliability
+      let lastUpdate = Date.now();
+      const updateCountdown = () => {
+        const now = Date.now();
+        const elapsed = now - lastUpdate;
+
+        if (elapsed >= 1000) {
+          lastUpdate = now;
+          setCountdownSeconds((prev) => {
+            const newValue = Math.max(0, prev - 1);
+            return newValue;
+          });
+        }
+
+        // Continue animation if countdown hasn't finished
+        if (Date.now() < navigationTimestamp) {
+          countdownInterval = requestAnimationFrame(updateCountdown);
+        }
+      };
+
+      countdownInterval = requestAnimationFrame(updateCountdown);
 
       // Setup navigation timer
       navigationTimeout = window.setTimeout(() => {
-        // Use an immediately invoked async function to handle the async operations
-        (async () => {
-          try {
-            // Reset onScoreboard status for all players before navigating
-            const { error } = await supabase
-              .from('players')
-              .update({ onScoreboard: false })
-              .eq('currentQuestionId', currentId);
-
-            if (error) {
-              console.error('Error resetting player status:', error);
-            }
-
-            const searchParams = new URLSearchParams(window.location.search);
-            const quizId = searchParams.get('quizId');
-
-            // Navigate with the quizId
-            if (isLastQuestion) {
-              navigate(`/podium?quizId=${quizId}`);
-            } else {
-              navigate(`/questions/${nextId}?quizId=${quizId}`);
-            }
-          } catch (err) {
-            console.error('Error during navigation:', err);
-            // Ensure we still navigate even if there's an exception
-            if (isLastQuestion) {
-              navigate(`/podium?quizId=${quizId}`);
-            } else {
-              navigate(`/questions/${nextId}?quizId=${quizId}`);
-            }
-          }
-        })();
+        console.log('Navigation timeout fired');
+        performNavigation();
       }, 10000);
+
+      // Add visibility change listener
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (countdownInterval) {
+          cancelAnimationFrame(countdownInterval);
+        }
+        if (navigationTimeout) {
+          clearTimeout(navigationTimeout);
+        }
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange,
+        );
+      };
     }
 
     return () => {
       supabase.removeChannel(subscription);
-      if (countdownInterval) clearInterval(countdownInterval);
-      if (navigationTimeout) clearTimeout(navigationTimeout);
     };
   }, [
     checkAndFetchPlayers,

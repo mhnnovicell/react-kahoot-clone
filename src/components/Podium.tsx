@@ -100,17 +100,43 @@ const Podium = () => {
     const quizId = searchParams.get('quizId');
 
     try {
-      // Clear all player data
-      await supabase.from('players').delete().neq('id', 0);
+      console.log('Resetting quiz for play again...');
 
-      // Clear session storage
+      // Step 1: Delete all player data
+      const { error: deleteError } = await supabase
+        .from('players')
+        .delete()
+        .neq('id', 0);
+
+      if (deleteError) {
+        console.error('Error deleting players:', deleteError);
+        throw deleteError;
+      }
+
+      // Step 2: Reset admin state
+      const { error: adminError } = await supabase
+        .from('admin')
+        .update({
+          startGame: false,
+          activeQuizId: quizId || null,
+        })
+        .eq('id', 1);
+
+      if (adminError) {
+        console.error('Error resetting admin:', adminError);
+        throw adminError;
+      }
+
+      // Step 3: Clear session storage
       sessionStorage.clear();
 
-      // Navigate back to signup with the same quiz
-      window.location.href = quizId ? `/signup?quizId=${quizId}` : '/signup';
+      console.log('Quiz reset complete, navigating to signup...');
+
+      // Step 4: Navigate back to signup
+      navigate(quizId ? `/signup?quizId=${quizId}` : '/signup');
     } catch (error) {
       console.error('Error resetting quiz:', error);
-      window.location.href = quizId ? `/signup?quizId=${quizId}` : '/signup';
+      alert('Failed to reset quiz. Please try again.');
     }
   };
 
