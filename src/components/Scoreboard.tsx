@@ -273,6 +273,7 @@ export default function Scoreboard() {
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
+  const [totalQuestions, setTotalQuestions] = useState(0); // Add this state
 
   // Check if this is the last question
   useEffect(() => {
@@ -293,6 +294,8 @@ export default function Scoreboard() {
         const result = await client.fetch(query, { quizId });
 
         if (result && result.questionsCount) {
+          setTotalQuestions(result.questionsCount); // Store total count
+
           if (currentId + 1 >= result.questionsCount) {
             setIsLastQuestion(true);
           }
@@ -590,8 +593,9 @@ export default function Scoreboard() {
               Stilling
             </h2>
             <p className="mt-2 text-center text-white/80">
-              Spørgsmål {currentId + 1}{' '}
-              {isLastQuestion ? '(Sidste spørgsmål)' : ''}
+              Spørgsmål {currentId + 1}
+              {totalQuestions > 0 && ` ud af ${totalQuestions}`}
+              {isLastQuestion && ' (Sidste spørgsmål)'}
             </p>
           </div>
 
