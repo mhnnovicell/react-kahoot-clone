@@ -82,20 +82,48 @@ export default function CreatePlayers() {
       return;
     }
 
-    // First check if a player with this name already exists
-    const allPlayers = await fetchPlayers();
-    const nameExists = allPlayers.some((player) => player.name === value);
+    try {
+      // First check if a player with this name already exists
+      const allPlayers = await fetchPlayers();
+      const nameExists = allPlayers.some(
+        (player) => player.name.toLowerCase() === value.trim().toLowerCase(),
+      );
 
-    if (nameExists) {
-      alert('A player with this name already exists.');
-      return;
-    }
+      if (nameExists) {
+        alert(
+          'A player with this name already exists. Please choose a different name.',
+        );
+        return;
+      }
 
-    const newPlayer = await insertPlayer(value, color);
-    if (newPlayer) {
-      setCurrentPlayer(newPlayer);
-      setPlayerExists(true);
-      setValue('');
+      // Check if user already has a player in this session
+      const existingPlayerId = sessionStorage.getItem('currentPlayerId');
+      if (existingPlayerId) {
+        const existingPlayer = allPlayers.find(
+          (p) => p.id === parseInt(existingPlayerId),
+        );
+        if (existingPlayer) {
+          alert(
+            'You already have a player created. Please wait for the game to start.',
+          );
+          setCurrentPlayer(existingPlayer);
+          setPlayerExists(true);
+          return;
+        }
+      }
+
+      const newPlayer = await insertPlayer(value.trim(), color);
+      if (newPlayer) {
+        setCurrentPlayer(newPlayer);
+        setPlayerExists(true);
+        setValue('');
+
+        // Store the player ID in session storage
+        sessionStorage.setItem('currentPlayerId', newPlayer.id.toString());
+      }
+    } catch (error) {
+      console.error('Error creating player:', error);
+      alert('Failed to create player. Please try again.');
     }
   };
 

@@ -60,12 +60,23 @@ export default function Dashboard() {
   // In Dashboard.tsx
   const handlePlayQuiz = async (quizId) => {
     try {
-      // Set this quiz as active in Supabase admin table
+      // Step 1: Delete all existing players from previous sessions
+      const { error: deleteError } = await supabase
+        .from('players')
+        .delete()
+        .neq('id', 0); // Delete all players (neq 0 means all rows)
+
+      if (deleteError) {
+        console.error('Error clearing players:', deleteError);
+        // Continue anyway - this is not critical
+      }
+
+      // Step 2: Reset the admin table completely
       const { data, error } = await supabase
         .from('admin')
         .update({
           activeQuizId: quizId,
-          startGame: false, // Reset game state
+          startGame: false, // Ensure game is not started
         })
         .eq('id', 1)
         .select();
@@ -74,25 +85,19 @@ export default function Dashboard() {
         throw error;
       }
 
+      // Step 3: Clear any cached player data from session storage
+      sessionStorage.removeItem('currentPlayerId');
+
+      // Optional: Clear all session storage for a complete reset
+      sessionStorage.clear();
+
       setActiveQuiz(quizId);
 
-      // Reset any existing players' state
-      await supabase
-        .from('players')
-        .update({
-          onScoreboard: false,
-          currentQuestionId: 0,
-          points: 0,
-          previousPoints: 0,
-        })
-        .neq('id', 0); // Update all players
-
-      // Navigate to the home screen where players can join
-      // Include the quizId as a parameter
+      // Navigate to the signup screen
       navigate(`/signup?quizId=${quizId}`);
     } catch (err) {
       console.error('Error starting quiz:', err);
-      alert('Failed to start quiz');
+      alert('Failed to start quiz. Please try again.');
     }
   };
 

@@ -12,7 +12,6 @@ const Podium = () => {
     const getPlayers = async () => {
       setLoading(true);
       const playerData = await fetchPlayers();
-      // Sort players by points in descending order
       const sortedPlayers = playerData
         .filter((player) => player.hasBeenAdded)
         .sort((a, b) => b.points - a.points);
@@ -21,6 +20,16 @@ const Podium = () => {
     };
 
     getPlayers();
+
+    const resetGameState = async () => {
+      try {
+        await supabase.from('admin').update({ startGame: false }).eq('id', 1);
+      } catch (error) {
+        console.error('Error resetting game state:', error);
+      }
+    };
+
+    resetGameState();
 
     // Subscribe to player changes
     const subscription = supabase
@@ -86,10 +95,23 @@ const Podium = () => {
     return heights[index];
   };
 
-  const handlePlayAgain = () => {
+  const handlePlayAgain = async () => {
     const searchParams = new URLSearchParams(window.location.search);
     const quizId = searchParams.get('quizId');
-    window.location.href = quizId ? `/signup?quizId=${quizId}` : '/';
+
+    try {
+      // Clear all player data
+      await supabase.from('players').delete().neq('id', 0);
+
+      // Clear session storage
+      sessionStorage.clear();
+
+      // Navigate back to signup with the same quiz
+      window.location.href = quizId ? `/signup?quizId=${quizId}` : '/signup';
+    } catch (error) {
+      console.error('Error resetting quiz:', error);
+      window.location.href = quizId ? `/signup?quizId=${quizId}` : '/signup';
+    }
   };
 
   return (
