@@ -79,8 +79,7 @@ const getRankEmoji = (index) => {
   }
 };
 
-const Player = ({ data, index }) => {
-  // Calculate points earned in this round
+const Player = ({ data, index, previousRank, hasOvertaken }) => {
   const pointsEarnedThisRound = data.points - (data.previousPoints || 0);
   const rankEmoji = getRankEmoji(index);
   const [showOvertakeEffect, setShowOvertakeEffect] = useState(false);
@@ -173,7 +172,7 @@ const Player = ({ data, index }) => {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex flex-col items-center justify-center w-full gap-5 p-4">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full gap-5 p-4 bg-gradient-to-br from-indigo-800/60 to-purple-800/60">
         {/* Rank indicator with animation */}
         <motion.div
           className="flex items-center justify-center w-10 h-10 text-xl font-bold text-white rounded-full bg-gradient-to-br from-indigo-600 to-purple-600"
@@ -266,13 +265,16 @@ export default function Scoreboard() {
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [isLastQuestion, setIsLastQuestion] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(10);
+
   // Track previous rankings to detect overtakes
   const previousRankings = useRef({});
   const [overtakenPlayers, setOvertakenPlayers] = useState(new Set());
+
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
 
+  // Check if this is the last question
   useEffect(() => {
     const checkIfLastQuestion = async () => {
       try {
@@ -284,7 +286,6 @@ export default function Scoreboard() {
           return;
         }
 
-        // Fetch only the questions for the current quiz
         const query = `*[_type == "quiz" && _id == $quizId][0] {
           "questionsCount": count(questions)
         }`;
@@ -292,7 +293,6 @@ export default function Scoreboard() {
         const result = await client.fetch(query, { quizId });
 
         if (result && result.questionsCount) {
-          // Check if we're on the last question (0-based index)
           if (currentId + 1 >= result.questionsCount) {
             setIsLastQuestion(true);
           }
@@ -305,11 +305,10 @@ export default function Scoreboard() {
     checkIfLastQuestion();
   }, [currentId]);
 
-  // Get current player ID from sessionStorage
+  // Get current player and update their scoreboard status
   useEffect(() => {
     const currentPlayerId = sessionStorage.getItem('currentPlayerId');
     if (currentPlayerId) {
-      // Fetch the current player data
       const fetchCurrentPlayer = async () => {
         const { data, error } = await supabase
           .from('players')
@@ -330,14 +329,16 @@ export default function Scoreboard() {
           .update({ onScoreboard: true, currentQuestionId: currentId })
           .eq('id', data.id);
 
-        if (updateError)
+        if (updateError) {
           console.error('Error updating player status:', updateError);
+        }
       };
 
       fetchCurrentPlayer();
     }
   }, [currentId]);
 
+  // Fetch players and detect overtakes
   const checkAndFetchPlayers = useCallback(async () => {
     const { data, error } = await supabase
       .from('players')
@@ -395,6 +396,7 @@ export default function Scoreboard() {
     }
   }, [currentId]);
 
+  // Main effect for player subscriptions and navigation
   useEffect(() => {
     checkAndFetchPlayers();
 
@@ -415,7 +417,7 @@ export default function Scoreboard() {
 
     let countdownInterval;
     let navigationTimeout;
-    let navigationTimestamp; // Track when navigation should happen
+    let navigationTimestamp;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && navigationTimestamp) {
@@ -469,8 +471,6 @@ export default function Scoreboard() {
     };
 
     if (allPlayersPresent) {
-      const nextId = currentId + 1;
-
       // Calculate when navigation should happen (10 seconds from now)
       navigationTimestamp = Date.now() + 10000;
 
