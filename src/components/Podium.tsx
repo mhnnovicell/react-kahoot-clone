@@ -110,7 +110,7 @@ const Podium = () => {
 
       if (deleteError) {
         console.error('Error deleting players:', deleteError);
-        throw deleteError;
+        // Don't throw - continue anyway
       }
 
       // Step 2: Reset admin state
@@ -124,7 +124,7 @@ const Podium = () => {
 
       if (adminError) {
         console.error('Error resetting admin:', adminError);
-        throw adminError;
+        // Don't throw - continue anyway
       }
 
       // Step 3: Clear session storage
@@ -132,11 +132,21 @@ const Podium = () => {
 
       console.log('Quiz reset complete, navigating to signup...');
 
-      // Step 4: Navigate back to signup
-      navigate(quizId ? `/signup?quizId=${quizId}` : '/signup');
+      // Step 4: Navigate back to signup with quizId if available
+      if (quizId) {
+        navigate(`/signup?quizId=${quizId}`);
+      } else {
+        navigate('/signup');
+      }
     } catch (error) {
       console.error('Error resetting quiz:', error);
-      alert('Failed to reset quiz. Please try again.');
+
+      // Fallback navigation even if there's an error
+      if (quizId) {
+        navigate(`/signup?quizId=${quizId}`);
+      } else {
+        navigate('/signup');
+      }
     }
   };
 

@@ -26,6 +26,18 @@ const playerVariants = {
   },
 };
 
+// Overtaking animation variant
+const overtakingVariants = {
+  overtaking: {
+    scale: [1, 1.1, 1],
+    x: [0, -10, 10, 0],
+    transition: {
+      duration: 0.8,
+      ease: 'easeInOut',
+    },
+  },
+};
+
 const CountUp = ({ start, end }) => {
   const controls = useAnimation();
   const [value, setValue] = useState(start);
@@ -71,22 +83,113 @@ const Player = ({ data, index }) => {
   // Calculate points earned in this round
   const pointsEarnedThisRound = data.points - (data.previousPoints || 0);
   const rankEmoji = getRankEmoji(index);
+  const [showOvertakeEffect, setShowOvertakeEffect] = useState(false);
+
+  useEffect(() => {
+    if (hasOvertaken) {
+      setShowOvertakeEffect(true);
+      const timer = setTimeout(() => setShowOvertakeEffect(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasOvertaken]);
 
   return (
     <motion.div
       layout
+      layoutId={`player-${data.id}`}
       variants={playerVariants}
-      className="mb-3 overflow-hidden rounded-lg shadow-lg backdrop-blur-lg"
+      className={`mb-3 overflow-hidden rounded-lg shadow-lg backdrop-blur-lg relative ${
+        showOvertakeEffect ? 'z-10' : 'z-0'
+      }`}
+      animate={showOvertakeEffect ? 'overtaking' : ''}
+      variants={overtakingVariants}
+      transition={{
+        layout: {
+          type: 'spring',
+          stiffness: 350,
+          damping: 25,
+          duration: 0.8,
+        },
+      }}
     >
-      <div className="flex flex-col items-center justify-center w-full gap-5 p-4">
-        {/* Left side: Rank and Player Info */}
-        <div className="flex items-center justify-center w-10 h-10 text-xl font-bold text-white rounded-full bg-gradient-to-br from-indigo-600 to-purple-600">
+      {/* Overtaking flash effect */}
+      <AnimatePresence>
+        {showOvertakeEffect && (
+          <>
+            {/* Gold flash overlay */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.4, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, times: [0, 0.5, 1] }}
+            />
+
+            {/* Sparkle particles */}
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 bg-yellow-300 rounded-full"
+                style={{
+                  left: `${20 + i * 10}%`,
+                  top: '50%',
+                }}
+                initial={{ scale: 0, opacity: 0, y: 0 }}
+                animate={{
+                  scale: [0, 1, 0],
+                  opacity: [0, 1, 0],
+                  y: [0, -30, -60],
+                }}
+                transition={{
+                  duration: 1,
+                  delay: i * 0.1,
+                  ease: 'easeOut',
+                }}
+              />
+            ))}
+
+            {/* Overtaking text */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: [0, 1, 1, 0], scale: [0.5, 1.2, 1.2, 0.8] }}
+              transition={{ duration: 1.2, times: [0, 0.2, 0.7, 1] }}
+            >
+              <div className="px-4 py-2 text-xl font-extrabold text-white rounded-lg bg-gradient-to-r from-amber-500 to-orange-600">
+                🚀 OVERTAKE! 🚀
+              </div>
+            </motion.div>
+
+            {/* Upward arrow indicator */}
+            <motion.div
+              className="absolute flex items-center justify-center text-3xl left-2 top-1/2"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: [-20, -40], opacity: [0, 1, 0] }}
+              transition={{ duration: 1, repeat: 2 }}
+            >
+              ⬆️
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <div className="relative z-10 flex flex-col items-center justify-center w-full gap-5 p-4">
+        {/* Rank indicator with animation */}
+        <motion.div
+          className="flex items-center justify-center w-10 h-10 text-xl font-bold text-white rounded-full bg-gradient-to-br from-indigo-600 to-purple-600"
+          animate={
+            previousRank !== undefined && previousRank > index
+              ? { scale: [1, 1.3, 1], rotate: [0, 360] }
+              : {}
+          }
+          transition={{ duration: 0.6 }}
+        >
           {rankEmoji}
-        </div>
+        </motion.div>
 
         <span className="text-xl font-semibold text-white">{data.name}</span>
 
-        {/* Right side: Points */}
+        {/* Points with animation */}
         <div className="px-5 py-2 text-xl font-extrabold text-white rounded-lg shadow-md bg-slate-800/60">
           {pointsEarnedThisRound !== 0 ? (
             <CountUp
@@ -98,7 +201,7 @@ const Player = ({ data, index }) => {
           )}
         </div>
 
-        {/* Points indicator with three states: positive, negative, or zero */}
+        {/* Points change indicator */}
         {pointsEarnedThisRound > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -163,6 +266,9 @@ export default function Scoreboard() {
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [isLastQuestion, setIsLastQuestion] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(10);
+  // Track previous rankings to detect overtakes
+  const previousRankings = useRef({});
+  const [overtakenPlayers, setOvertakenPlayers] = useState(new Set());
   const { id } = useParams();
   const currentId = parseInt(id, 10);
   const navigate = useNavigate();
@@ -241,6 +347,33 @@ export default function Scoreboard() {
     if (error) {
       console.error('Error fetching scoreboard:', error);
       return;
+    }
+
+    // Detect overtakes by comparing previous and current rankings
+    const newOvertaken = new Set();
+    data.forEach((player, currentIndex) => {
+      const previousIndex = previousRankings.current[player.id];
+
+      // If player moved up in ranking (lower index = better rank)
+      if (previousIndex !== undefined && previousIndex > currentIndex) {
+        newOvertaken.add(player.id);
+        console.log(
+          `${player.name} overtook! From ${previousIndex + 1} to ${currentIndex + 1}`,
+        );
+      }
+    });
+
+    // Update previous rankings for next comparison
+    const newRankings = {};
+    data.forEach((player, index) => {
+      newRankings[player.id] = index;
+    });
+    previousRankings.current = newRankings;
+
+    // Set overtaken players and clear after animation
+    if (newOvertaken.size > 0) {
+      setOvertakenPlayers(newOvertaken);
+      setTimeout(() => setOvertakenPlayers(new Set()), 2000);
     }
 
     setPlayersList(data);
@@ -477,7 +610,13 @@ export default function Scoreboard() {
                   {playersList
                     .filter((player) => player.hasBeenAdded)
                     .map((player, index) => (
-                      <Player key={player.id} data={player} index={index} />
+                      <Player
+                        key={player.id}
+                        data={player}
+                        index={index}
+                        previousRank={previousRankings.current[player.id]}
+                        hasOvertaken={overtakenPlayers.has(player.id)}
+                      />
                     ))}
                 </motion.div>
               )}
